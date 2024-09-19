@@ -17,18 +17,18 @@ Very much a work in progress and not thoroughly tested.
 
 ## TODO
 
-- Add commands to retrieve general information about the server, TPS, uptime, etc. Maybe some helpers like getting a
-  wiki link for an advancement.
-- Transform the dimension name to a readable name.
-- Reduce/remove blocks in the Discord bridge.
-- Retrieve the GuildMember from the Discord message, this way we can get the display name and role color for better
-  readability in the server.
+- Include the Discord4J library in the jar, not sure how to do this.
+- There are 122 advancements but the `progress` command shows all criterion for them, giving a much bigger number, might
+  rework how things are done in the class to fix this.
+- Add Discord commands to retrieve general information about the server, TPS, uptime, etc.
+- Improve Discord methods, I don't believe the library is being used properly.
 
 ## Configuration
 
 At startup, a config folder called `cooptweaks` will be created, it will include the following:
 
-- `discord.toml`: Contains the bot token and channel ID to send events and relay messages between the server and the
+- `discord.toml`: Contains the bot token, channel and guild ID to send events and relay messages between the server and
+  the
   Discord channel.
 - `saves`: Folder where files with the advancements reached by the players. The files are named with the world seed.
 

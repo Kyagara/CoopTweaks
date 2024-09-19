@@ -1,6 +1,7 @@
 package com.cooptweaks;
 
 import com.cooptweaks.events.GrantCriterionCallback;
+import com.cooptweaks.events.PlayerDeathCallback;
 import discord4j.rest.util.Color;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -28,6 +29,7 @@ public class Server implements ModInitializer {
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             BRIDGE.NotifyStarted(server);
             // Requires the server to be started since the seed won't be available until then.
+            // This might be changed if manually reading the level.dat, haven't seen any issue from doing it this way.
             ADVANCEMENTS.LoadAdvancements(server);
         });
 
@@ -37,24 +39,23 @@ public class Server implements ModInitializer {
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ServerPlayerEntity player = handler.player;
-            BRIDGE.SendEmbed(String.format("**%s** joined!", player.getName().getString()), Color.GREEN);
+            BRIDGE.PlayerJoined(player);
             ADVANCEMENTS.SyncPlayerOnJoin(player);
         });
 
         ServerMessageEvents.CHAT_MESSAGE.register((message, player, parameters) -> {
-            String text = String.format("**%s** > %s", player.getName().getString(), message.getContent().getString());
-            BRIDGE.SendMessage(text);
+            BRIDGE.PlayerSentChatMessage(player, message);
         });
 
         ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, oldWorld, newWorld) -> {
-            String dimension = newWorld.getRegistryKey().getValue().toString();
-            String message = String.format("**%s** entered **%s**.", player.getName().getString(), dimension);
-            BRIDGE.SendEmbed(message, Color.BLACK);
+            BRIDGE.PlayerChangedDimension(player, newWorld);
         });
+
+        PlayerDeathCallback.EVENT.register(BRIDGE::PlayerDied);
 
         ServerPlayConnectionEvents.DISCONNECT.register((handler, sender) -> {
             ServerPlayerEntity player = handler.player;
-            BRIDGE.SendEmbed(String.format("**%s** left!", player.getName().getString()), Color.BLACK);
+            BRIDGE.PlayerLeft(player);
         });
 
         GrantCriterionCallback.EVENT.register(ADVANCEMENTS::OnCriterion);
