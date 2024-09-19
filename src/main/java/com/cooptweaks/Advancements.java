@@ -61,6 +61,59 @@ public final class Advancements {
         CURRENT_SEED_FILE.write(buffer);
     }
 
+    public void LoadAdvancements(MinecraftServer server) {
+        SERVER = server;
+
+        Collection<AdvancementEntry> advancements = server.getAdvancementLoader().getAdvancements();
+        int totalAdvancements = advancements.size();
+
+        ALL_ADVANCEMENTS = new HashMap<>(totalAdvancements);
+        COMPLETED_ADVANCEMENTS = new HashMap<>(totalAdvancements);
+
+        for (AdvancementEntry entry : advancements) {
+            ALL_ADVANCEMENTS.put(entry.id(), entry);
+        }
+
+        Server.LOGGER.info("Loaded {} advancements.", totalAdvancements);
+
+        Path save = ADVANCEMENTS_SAVES_PATH.resolve(String.valueOf(server.getOverworld().getSeed()));
+
+        if (!Files.exists(save)) {
+            try {
+                CURRENT_SEED_FILE = FileChannel.open(save, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            // No need to continue since we have no data to load.
+            return;
+        }
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(save.toString()));
+            String line = reader.readLine();
+
+            while (line != null) {
+                String[] arr = line.split(",");
+                String entryName = arr[0];
+                String criterionName = arr[1];
+
+                AdvancementEntry entry = ALL_ADVANCEMENTS.get(Identifier.of(entryName));
+                COMPLETED_ADVANCEMENTS.put(criterionName, entry);
+
+                line = reader.readLine();
+            }
+
+            reader.close();
+
+            CURRENT_SEED_FILE = FileChannel.open(save, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Server.LOGGER.info("{} completed advancements.", COMPLETED_ADVANCEMENTS.size());
+    }
+
     public void SyncPlayerOnJoin(ServerPlayerEntity player) {
         if (COMPLETED_ADVANCEMENTS.isEmpty()) {
             return;
@@ -117,59 +170,6 @@ public final class Advancements {
                 }
             }
         }
-    }
-
-    public void LoadAdvancements(MinecraftServer server) {
-        SERVER = server;
-
-        Collection<AdvancementEntry> advancements = server.getAdvancementLoader().getAdvancements();
-        int totalAdvancements = advancements.size();
-
-        ALL_ADVANCEMENTS = new HashMap<>(totalAdvancements);
-        COMPLETED_ADVANCEMENTS = new HashMap<>(totalAdvancements);
-
-        for (AdvancementEntry entry : advancements) {
-            ALL_ADVANCEMENTS.put(entry.id(), entry);
-        }
-
-        Server.LOGGER.info("Loaded {} advancements.", totalAdvancements);
-
-        Path save = ADVANCEMENTS_SAVES_PATH.resolve(String.valueOf(server.getOverworld().getSeed()));
-
-        if (!Files.exists(save)) {
-            try {
-                CURRENT_SEED_FILE = FileChannel.open(save, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            // No need to continue since we have no data to load.
-            return;
-        }
-
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(save.toString()));
-            String line = reader.readLine();
-
-            while (line != null) {
-                String[] arr = line.split(",");
-                String entryName = arr[0];
-                String criterionName = arr[1];
-
-                AdvancementEntry entry = ALL_ADVANCEMENTS.get(Identifier.of(entryName));
-                COMPLETED_ADVANCEMENTS.put(criterionName, entry);
-
-                line = reader.readLine();
-            }
-
-            reader.close();
-
-            CURRENT_SEED_FILE = FileChannel.open(save, StandardOpenOption.APPEND);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        Server.LOGGER.info("{} completed advancements.", COMPLETED_ADVANCEMENTS.size());
     }
 
     public void RegisterCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
