@@ -3,7 +3,6 @@ package com.cooptweaks;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import discord4j.rest.util.Color;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.advancement.Advancement;
 import net.minecraft.advancement.AdvancementDisplay;
 import net.minecraft.advancement.AdvancementEntry;
@@ -33,19 +32,11 @@ public final class Advancements {
     public static Map<Identifier, AdvancementEntry> ALL_ADVANCEMENTS = new HashMap<>();
     public static Map<String, AdvancementEntry> COMPLETED_ADVANCEMENTS = new HashMap<>();
 
-    // Folder where advancement progress per world(seed) is saved.
-    private static final Path ADVANCEMENTS_SAVES_PATH = FabricLoader.getInstance().getConfigDir().resolve("cooptweaks/saves/");
     private static FileChannel CURRENT_SEED_FILE;
 
     private static Advancements INSTANCE = null;
 
     private Advancements() {
-        // Generating config folders.
-        try {
-            Files.createDirectories(ADVANCEMENTS_SAVES_PATH);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static Advancements getInstance() {
@@ -76,7 +67,7 @@ public final class Advancements {
 
         Server.LOGGER.info("Loaded {} advancements.", totalAdvancements);
 
-        Path save = ADVANCEMENTS_SAVES_PATH.resolve(String.valueOf(server.getOverworld().getSeed()));
+        Path save = Config.SAVES.resolve(String.valueOf(server.getOverworld().getSeed()));
 
         if (!Files.exists(save)) {
             try {

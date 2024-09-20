@@ -17,7 +17,6 @@ Very much a work in progress and not thoroughly tested.
 
 ## TODO
 
-- Include the Discord4J library in the jar, not sure how to do this.
 - There are 122 advancements but the `progress` command shows all criterion for them, giving a much bigger number, might
   rework how things are done in the class to fix this.
 - Add Discord commands to retrieve general information about the server, TPS, uptime, etc.

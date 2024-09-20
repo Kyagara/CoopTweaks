@@ -2,7 +2,6 @@ package com.cooptweaks;
 
 import com.cooptweaks.events.GrantCriterionCallback;
 import com.cooptweaks.events.PlayerDeathCallback;
-import discord4j.rest.util.Color;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
@@ -22,6 +21,8 @@ public class Server implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        Config.Verify();
+        
         ServerLifecycleEvents.SERVER_STARTING.register((server) -> {
             BRIDGE.Start();
         });
