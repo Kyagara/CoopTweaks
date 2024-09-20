@@ -14,7 +14,6 @@ import discord4j.gateway.intent.Intent;
 import discord4j.gateway.intent.IntentSet;
 import discord4j.rest.entity.RestChannel;
 import discord4j.rest.util.Color;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.message.SignedMessage;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -27,9 +26,6 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public final class Bridge {
@@ -64,25 +60,15 @@ public final class Bridge {
     }
 
     private Bridge() {
-        Path DISCORD_CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("cooptweaks/discord.toml");
-
-        try {
-            if (!Files.exists(DISCORD_CONFIG_PATH)) {
-                String defaultConfig = "token = " + System.lineSeparator() + "channel_id = " + System.lineSeparator() + "guild_id = ";
-                Files.writeString(DISCORD_CONFIG_PATH, defaultConfig, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        Map<String, String> config = Config.Parse(DISCORD_CONFIG_PATH);
-        TOKEN = config.get("token");
-        CHANNEL_ID = config.get("channel_id");
-        GUILD_ID = config.get("guild_id");
     }
 
     public void Start() {
-        if (TOKEN.isEmpty() || CHANNEL_ID.isEmpty()) {
+        Map<String, String> config = Config.Parse(Config.DISCORD);
+        TOKEN = config.get("token");
+        CHANNEL_ID = config.get("channel_id");
+        GUILD_ID = config.get("guild_id");
+
+        if (TOKEN.isEmpty() || CHANNEL_ID.isEmpty() || GUILD_ID.isEmpty()) {
             Server.LOGGER.warn("Discord bot is not properly configured.");
             return;
         }
