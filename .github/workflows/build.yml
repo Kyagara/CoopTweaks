@@ -28,7 +28,7 @@ jobs:
       - name: Build
         run: ./gradlew build
 
-      - run: rm build/libs/cooptweaks-all.jar
+      - run: rm ./build/libs/cooptweaks-*-all.jar
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
