@@ -13,54 +13,55 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Server implements ModInitializer {
-    public static final String MOD_ID = "cooptweaks";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+	public static final String MOD_ID = "cooptweaks";
+	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public static final Bridge BRIDGE = Bridge.getInstance();
-    public static final Advancements ADVANCEMENTS = Advancements.getInstance();
+	public static final Discord DISCORD = Discord.getInstance();
+	public static final Advancements ADVANCEMENTS = Advancements.getInstance();
 
-    @Override
-    public void onInitialize() {
-        Config.Verify();
-        
-        ServerLifecycleEvents.SERVER_STARTING.register((server) -> {
-            BRIDGE.Start();
-        });
+	@Override
+	public void onInitialize() {
+		// Verify that the necessary config files exist.
+		Config.Verify();
 
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            BRIDGE.NotifyStarted(server);
-            // Requires the server to be started since the seed won't be available until then.
-            // This might be changed if manually reading the level.dat, haven't seen any issue from doing it this way.
-            ADVANCEMENTS.LoadAdvancements(server);
-        });
+		ServerLifecycleEvents.SERVER_STARTING.register((server) -> {
+			DISCORD.Start();
+		});
 
-        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
-            BRIDGE.Stop();
-        });
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+			DISCORD.NotifyStarted(server);
+			// Requires the server to be started since the seed won't be available until then.
+			// This might be changed if manually reading the level.dat, haven't seen any issue from doing it this way.
+			ADVANCEMENTS.LoadAdvancements(server);
+		});
 
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            ServerPlayerEntity player = handler.player;
-            BRIDGE.PlayerJoined(player);
-            ADVANCEMENTS.SyncPlayerOnJoin(player);
-        });
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+			DISCORD.Stop();
+		});
 
-        ServerMessageEvents.CHAT_MESSAGE.register((message, player, parameters) -> {
-            BRIDGE.PlayerSentChatMessage(player, message);
-        });
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			ServerPlayerEntity player = handler.player;
+			DISCORD.PlayerJoined(player);
+			ADVANCEMENTS.SyncPlayerOnJoin(player);
+		});
 
-        ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, oldWorld, newWorld) -> {
-            BRIDGE.PlayerChangedDimension(player, newWorld);
-        });
+		ServerMessageEvents.CHAT_MESSAGE.register((message, player, parameters) -> {
+			DISCORD.PlayerSentChatMessage(player, message);
+		});
 
-        PlayerDeathCallback.EVENT.register(BRIDGE::PlayerDied);
+		ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, oldWorld, newWorld) -> {
+			DISCORD.PlayerChangedDimension(player, newWorld);
+		});
 
-        ServerPlayConnectionEvents.DISCONNECT.register((handler, sender) -> {
-            ServerPlayerEntity player = handler.player;
-            BRIDGE.PlayerLeft(player);
-        });
+		PlayerDeathCallback.EVENT.register(DISCORD::PlayerDied);
 
-        GrantCriterionCallback.EVENT.register(ADVANCEMENTS::OnCriterion);
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, sender) -> {
+			ServerPlayerEntity player = handler.player;
+			DISCORD.PlayerLeft(player);
+		});
 
-        CommandRegistrationCallback.EVENT.register(ADVANCEMENTS::RegisterCommands);
-    }
+		GrantCriterionCallback.EVENT.register(ADVANCEMENTS::OnCriterion);
+
+		CommandRegistrationCallback.EVENT.register(ADVANCEMENTS::RegisterCommands);
+	}
 }

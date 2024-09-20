@@ -14,19 +14,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PlayerAdvancementTracker.class)
 public abstract class PlayerAdvancementTrackerMixin {
-    @Shadow
-    private ServerPlayerEntity owner;
+	@Shadow
+	private ServerPlayerEntity owner;
 
-    @Shadow
-    public abstract AdvancementProgress getProgress(AdvancementEntry advancement);
+	@Shadow
+	public abstract AdvancementProgress getProgress(AdvancementEntry advancement);
 
-    @Inject(method = "grantCriterion", at = @At(value = "RETURN"))
-    public void grantCriterion(AdvancementEntry entry, String criterionName, CallbackInfoReturnable<Boolean> cir) {
-        GrantCriterionCallback.EVENT.invoker().grantCriterion(owner, entry, criterionName, getProgress(entry).isDone());
-    }
+	@Inject(method = "grantCriterion", at = @At(value = "RETURN"))
+	public void grantCriterion(AdvancementEntry entry, String criterionName, CallbackInfoReturnable<Boolean> cir) {
+		GrantCriterionCallback.EVENT.invoker().grantCriterion(owner, entry, criterionName, getProgress(entry).isDone());
+	}
 
-    @ModifyExpressionValue(method = "method_53637(Lnet/minecraft/advancement/AdvancementEntry;Lnet/minecraft/advancement/AdvancementDisplay;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/advancement/AdvancementDisplay;shouldAnnounceToChat()Z"))
-    public boolean disableVanillaAnnounceAdvancements(boolean original) {
-        return false;
-    }
+	@ModifyExpressionValue(method = "method_53637(Lnet/minecraft/advancement/AdvancementEntry;Lnet/minecraft/advancement/AdvancementDisplay;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/advancement/AdvancementDisplay;shouldAnnounceToChat()Z"))
+	public boolean disableVanillaAnnounceAdvancements(boolean original) {
+		return false;
+	}
 }
