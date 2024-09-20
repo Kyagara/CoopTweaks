@@ -1,5 +1,6 @@
 package com.cooptweaks;
 
+import com.cooptweaks.discord.Bridge;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import discord4j.rest.util.Color;
@@ -105,14 +106,14 @@ public final class Advancements {
 		Server.LOGGER.info("{} completed advancements.", COMPLETED_ADVANCEMENTS.size());
 	}
 
-	public void SyncPlayerOnJoin(ServerPlayerEntity player) {
+	public void SyncPlayerOnJoin(ServerPlayerEntity player, String name) {
 		if (COMPLETED_ADVANCEMENTS.isEmpty()) {
 			return;
 		}
 
 		PlayerAdvancementTracker tracker = player.getAdvancementTracker();
 
-		Server.LOGGER.info("Syncing {} advancements.", player.getName().getString());
+		Server.LOGGER.info("Syncing {} advancements.", name);
 		COMPLETED_ADVANCEMENTS.forEach((key, value) -> tracker.grantCriterion(value, key));
 	}
 
@@ -150,7 +151,7 @@ public final class Advancements {
 
 				String description = displayObj.getDescription().getString();
 				String message = String.format("**%s** has made the advancement **%s**!\n*%s*", playerName, title, description);
-				Discord.getInstance().SendEmbed(message, Color.GREEN);
+				Bridge.getInstance().SendEmbed(message, Color.GREEN);
 			}
 
 			List<ServerPlayerEntity> players = SERVER.getPlayerManager().getPlayerList();
@@ -170,9 +171,7 @@ public final class Advancements {
 	}
 
 	private int progressCommand(CommandContext<ServerCommandSource> context) {
-		int total = ALL_ADVANCEMENTS.size();
-		int completed = COMPLETED_ADVANCEMENTS.size();
-		context.getSource().sendFeedback(() -> Text.literal(String.format("%d from %d advancements completed so far.", completed, total)), false);
+		context.getSource().sendFeedback(() -> Text.literal(String.format("%s advancements completed so far.", Utils.GetAdvancementsProgress())), false);
 		return 1;
 	}
 }
