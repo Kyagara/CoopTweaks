@@ -11,67 +11,78 @@ import java.util.List;
 import java.util.Map;
 
 public class Config {
-    // Main config folder.
-    public static final Path MAIN = FabricLoader.getInstance().getConfigDir().resolve("cooptweaks");
-    // Folder where advancement progress per world(seed) is saved.
-    public static final Path SAVES = MAIN.resolve("saves");
-    // Discord bot config file.
-    public static final Path DISCORD = MAIN.resolve("discord.toml");
+	/** Main config folder path. */
+	public static final Path MAIN = FabricLoader.getInstance().getConfigDir().resolve("cooptweaks");
 
-    // Verify that the necessary config files exist.
-    // Folder "cooptweaks" which should contain:
-    // - 'saves' folder
-    // - 'discord.toml'
-    public static void Verify() {
-        if (!Files.exists(MAIN)) {
-            try {
-                Files.createDirectory(MAIN);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+	/** Folder where advancement progress per world(seed) is saved. */
+	public static final Path SAVES = MAIN.resolve("saves");
 
-        if (!Files.exists(SAVES)) {
-            try {
-                Files.createDirectory(SAVES);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+	/** Discord bot config file path. */
+	public static final Path DISCORD = MAIN.resolve("discord.toml");
 
-        if (!Files.exists(DISCORD)) {
-            try {
-                String defaultConfig = "token = " + System.lineSeparator() + "channel_id = " + System.lineSeparator() + "guild_id = ";
-                Files.writeString(DISCORD, defaultConfig, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+	/**
+	 Verify that the necessary config files exist.
+	 Folder "cooptweaks" which should contain:
+	 <ul>
+	 <li>discord.toml</li>
+	 <li>saves</li>
+	 </ul>
+	 */
+	public static void Verify() {
+		if (!Files.exists(MAIN)) {
+			try {
+				Files.createDirectory(MAIN);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 
-    // Simple parser for toml config files.
-    public static Map<String, String> Parse(Path path) {
-        List<String> lines;
+		if (!Files.exists(SAVES)) {
+			try {
+				Files.createDirectory(SAVES);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 
-        try {
-            lines = Files.readAllLines(path);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+		if (!Files.exists(DISCORD)) {
+			try {
+				String defaultConfig = "token = " + System.lineSeparator() + "channel_id = ";
+				Files.writeString(DISCORD, defaultConfig, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
 
-        Map<String, String> config = new HashMap<>(lines.size());
+	/**
+	 Simple parser for toml config files.
 
-        for (String line : lines) {
-            if (line.contains("#") || line.isEmpty()) {
-                continue;
-            }
+	 @param file Path to the config file.
+	 @return Map of key-value pairs.
+	 */
+	public static Map<String, String> Parse(Path file) {
+		List<String> lines;
 
-            String[] parts = line.split("=", 2);
-            String key = parts[0].trim();
-            String value = parts[1].trim();
-            config.put(key, value);
-        }
+		try {
+			lines = Files.readAllLines(file);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
-        return config;
-    }
+		Map<String, String> config = new HashMap<>(lines.size());
+
+		for (String line : lines) {
+			if (line.contains("#") || line.isEmpty()) {
+				continue;
+			}
+
+			String[] parts = line.split("=", 2);
+			String key = parts[0].trim();
+			String value = parts[1].trim();
+			config.put(key, value);
+		}
+
+		return config;
+	}
 }

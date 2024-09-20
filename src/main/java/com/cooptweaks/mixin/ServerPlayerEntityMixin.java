@@ -13,11 +13,11 @@ import java.util.Optional;
 
 @Mixin(ServerPlayerEntity.class)
 public class ServerPlayerEntityMixin {
-    @Inject(method = "onDeath", at = @At(value = "RETURN"))
-    public void onDeath(DamageSource damageSource, CallbackInfo ci) {
-        ServerPlayerEntity player = (ServerPlayerEntity) (Object) this;
-        PlayerEntityAccessor playerEntityAccessor = (PlayerEntityAccessor) this;
-        Optional<GlobalPos> lastDeathPos = playerEntityAccessor.getLastDeathPos();
-        PlayerDeathCallback.EVENT.invoker().onDeath(player, lastDeathPos.get(), damageSource.getDeathMessage(player));
-    }
+	@Inject(method = "onDeath", at = @At(value = "RETURN"))
+	public void onDeath(DamageSource damageSource, CallbackInfo ci) {
+		ServerPlayerEntity player = (ServerPlayerEntity) (Object) this;
+		PlayerEntityAccessor playerEntityAccessor = (PlayerEntityAccessor) this;
+		Optional<GlobalPos> lastDeathPos = playerEntityAccessor.getLastDeathPos();
+		PlayerDeathCallback.EVENT.invoker().onDeath(player, lastDeathPos.get(), damageSource.getDeathMessage(player));
+	}
 }
