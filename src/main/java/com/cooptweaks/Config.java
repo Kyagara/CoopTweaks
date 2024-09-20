@@ -47,7 +47,7 @@ public class Config {
 
 		if (!Files.exists(DISCORD)) {
 			try {
-				String defaultConfig = "token = " + System.lineSeparator() + "channel_id = ";
+				String defaultConfig = "token = " + System.lineSeparator() + "channel_id = " + System.lineSeparator() + "application_id = ";
 				Files.writeString(DISCORD, defaultConfig, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
