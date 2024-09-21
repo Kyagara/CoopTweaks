@@ -6,10 +6,13 @@ import discord4j.discordjson.json.ApplicationCommandRequest;
 import net.minecraft.server.MinecraftServer;
 
 public interface SlashCommand {
+	/** The name of the command. */
 	String getName();
 
+	/** The description of the command. */
 	String getDescription();
 
+	/** The {@link ApplicationCommandRequest} to be sent to Discord, can include description, permissions, options, etc. */
 	ApplicationCommandRequest Build();
 
 	/**
