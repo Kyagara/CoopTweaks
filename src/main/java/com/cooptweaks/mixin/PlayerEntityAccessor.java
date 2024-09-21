@@ -9,6 +9,6 @@ import java.util.Optional;
 
 @Mixin(PlayerEntity.class)
 public interface PlayerEntityAccessor {
-    @Accessor(value = "lastDeathPos")
-    Optional<GlobalPos> getLastDeathPos();
+	@Accessor(value = "lastDeathPos")
+	Optional<GlobalPos> getLastDeathPos();
 }

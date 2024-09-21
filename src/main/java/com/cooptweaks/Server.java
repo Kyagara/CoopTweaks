@@ -3,7 +3,6 @@ package com.cooptweaks;
 import com.cooptweaks.discord.Bridge;
 import com.cooptweaks.events.GrantCriterionCallback;
 import com.cooptweaks.events.PlayerDeathCallback;
-import discord4j.rest.util.Color;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;

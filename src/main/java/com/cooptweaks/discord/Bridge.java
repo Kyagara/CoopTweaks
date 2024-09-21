@@ -48,7 +48,7 @@ public final class Bridge {
 	private static MinecraftServer SERVER;
 
 	/** Queue of events to be processed after the bot is ready. */
-	private static final List<Runnable> QUEUE = new ArrayList<>();
+	private static final List<Runnable> QUEUE = new ArrayList<>(2);
 
 	public void QueueEvent(Runnable event) {
 		if (BOT_READY.get()) {
@@ -140,7 +140,6 @@ public final class Bridge {
 						.map(Channel::getRestChannel)
 						.filter(Objects::nonNull)
 						.doOnNext(channel -> {
-							gateway.updatePresence(ClientPresence.online(ClientActivity.playing("Minecraft"))).subscribe();
 							CHANNEL = channel;
 							BOT_READY.set(true);
 
@@ -159,6 +158,7 @@ public final class Bridge {
 	}
 
 	private void onReady(ReadyEvent ready) {
+		GATEWAY.updatePresence(ClientPresence.online(ClientActivity.playing("Minecraft"))).subscribe();
 		User self = ready.getSelf();
 		BOT_USER_ID = self.getId();
 		Server.LOGGER.info("Logged in as {}", self.getUsername());
