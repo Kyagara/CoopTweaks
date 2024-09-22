@@ -1,8 +1,8 @@
 package com.cooptweaks.discord.commands;
 
-import com.cooptweaks.Result;
 import com.cooptweaks.Utils;
 import com.cooptweaks.discord.SlashCommand;
+import com.cooptweaks.types.Result;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import discord4j.rest.util.Color;

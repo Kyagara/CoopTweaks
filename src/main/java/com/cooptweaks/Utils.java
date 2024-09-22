@@ -1,11 +1,13 @@
 package com.cooptweaks;
 
+import com.cooptweaks.advancements.Advancements;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class Utils {
 	/** Maps dimension IDs to their names. */
-	private static final Map<String, String> WORLDS = new HashMap<>(Map.of(
+	private static final HashMap<String, String> WORLDS = new HashMap<>(Map.of(
 			"minecraft:overworld", "Overworld",
 			"minecraft:the_nether", "Nether",
 			"minecraft:the_end", "End"
@@ -18,7 +20,7 @@ public class Utils {
 	 @return The dimension name of the player. Example: "Overworld".
 	 */
 	public static String GetPlayerDimension(String player) {
-		String dimensionId = Server.PLAYER_CURRENT_DIMENSION_ID.get(player);
+		String dimensionId = Main.PLAYER_CURRENT_DIMENSION_ID.get(player);
 		String dimension = WORLDS.get(dimensionId);
 		if (dimension == null) {
 			return dimensionId;

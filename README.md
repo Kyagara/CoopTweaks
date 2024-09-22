@@ -8,8 +8,6 @@ This project is inspired by the [CooperativeAdvancements](https://modrinth.com/m
 goal with it mod is to add on the coop experience I really enjoyed from CooperativeAdvancements by giving more
 configurable features in just one package.
 
-Very much a work in progress and not thoroughly tested.
-
 ## Features
 
 - Bridges a Discord channel to the Minecraft server chat, allowing for chat between the two.
@@ -19,6 +17,8 @@ Very much a work in progress and not thoroughly tested.
 
 ## TODO
 
+- Use the `criterion` instead of `advancement` name in some places.
+- Maybe the revoke of the advancement criterion must also be tracked.
 - There are 122 advancements but the `progress` command shows all criterion for them, giving a much bigger number, might
   rework how things are done in the class to fix this.
 - Add Discord commands to retrieve general information about the server, TPS, uptime, etc.
@@ -27,12 +27,14 @@ Very much a work in progress and not thoroughly tested.
 
 At startup, a config folder called `cooptweaks` will be created, it will include the following:
 
-- `discord.toml`: Contains the bot token and other necessary configuration fields.
-- `saves`: Folder where files with the advancements reached by the players. The files are named with the world seed.
+- `saves`: Folder containing the advancements reached by the players, files are named by the world seed.
+- `discord.toml`: Configure or enable/disable the Discord bridge.
+
+The Discord bot requires `MESSAGE_CONTENT` and `GUILD_MEMBERS` intents.
 
 ## Commands
 
-### `/cooptweaks <subcommand>`
+### `/cooptweaks advancements <subcommand>`
 
 - `progress`: Shows the advancement progress of the world.
 
