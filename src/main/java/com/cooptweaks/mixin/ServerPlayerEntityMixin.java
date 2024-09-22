@@ -1,6 +1,6 @@
 package com.cooptweaks.mixin;
 
-import com.cooptweaks.events.PlayerDeathCallback;
+import com.cooptweaks.event.PlayerDeathCallback;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.GlobalPos;

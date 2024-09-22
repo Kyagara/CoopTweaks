@@ -1,11 +1,11 @@
 package com.cooptweaks.discord;
 
-import com.cooptweaks.Config;
-import com.cooptweaks.Result;
-import com.cooptweaks.Server;
+import com.cooptweaks.Main;
 import com.cooptweaks.Utils;
 import com.cooptweaks.discord.commands.Status;
-import com.ibm.icu.impl.Pair;
+import com.cooptweaks.types.ConfigMap;
+import com.cooptweaks.types.Result;
+import com.mojang.datafixers.util.Pair;
 import discord4j.common.store.Store;
 import discord4j.common.store.impl.LocalStoreLayout;
 import discord4j.common.util.Snowflake;
@@ -44,8 +44,33 @@ import net.minecraft.util.math.GlobalPos;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public final class Bridge {
+public final class Discord {
+	private Discord() {
+	}
+
+	private static Discord INSTANCE = null;
+
+	public static Discord getInstance() {
+		if (INSTANCE == null) {
+			INSTANCE = new Discord();
+		}
+
+		return INSTANCE;
+	}
+
 	private static MinecraftServer SERVER;
+	private static GatewayDiscordClient GATEWAY;
+	private static Snowflake BOT_USER_ID;
+	private static RestChannel CHANNEL;
+
+	/** Slash commands. */
+	// Not sure if a map is the best way to do this.
+	private static final HashMap<String, SlashCommand> COMMANDS = new HashMap<>(Map.of(
+			"status", new Status()
+	));
+
+	/** Whether the bot has finished setting up all necessary components. */
+	private static final AtomicBoolean BOT_READY = new AtomicBoolean(false);
 
 	/** Queue of events to be processed after the bot is ready. */
 	private static final List<Runnable> QUEUE = new ArrayList<>(2);
@@ -66,41 +91,13 @@ public final class Bridge {
 		QUEUE.clear();
 	}
 
-	private static GatewayDiscordClient GATEWAY;
+	public void Start(ConfigMap config) {
+		String token = config.get("token").toString();
+		String channelId = config.get("channel_id").toString();
+		long applicationId = config.get("application_id").toLong();
 
-	/** Whether the bot is ready to bridge messages, set after finishing setup. */
-	private static final AtomicBoolean BOT_READY = new AtomicBoolean(false);
-
-	private static Snowflake BOT_USER_ID;
-
-	/** Used to send messages to the channel */
-	private static RestChannel CHANNEL;
-
-	/** Slash commands. Not sure if a map is the best way to do this. */
-	private static final Map<String, SlashCommand> COMMANDS = new HashMap<>(Map.of(
-			"status", new Status()
-	));
-
-	private static Bridge INSTANCE = null;
-
-	public static Bridge getInstance() {
-		if (INSTANCE == null) {
-			INSTANCE = new Bridge();
-		}
-		return INSTANCE;
-	}
-
-	private Bridge() {
-	}
-
-	public void Start() {
-		Map<String, String> config = Config.Parse(Config.DISCORD);
-		String token = config.get("token");
-		String channelId = config.get("channel_id");
-		String applicationId = config.get("application_id");
-
-		if (token.isEmpty() || channelId.isEmpty() || applicationId.isEmpty()) {
-			Server.LOGGER.error("Discord bot is not properly configured.");
+		if (token.isEmpty() || channelId.isEmpty() || applicationId == 0) {
+			Main.LOGGER.error("Discord bot is not properly configured.");
 			return;
 		}
 
@@ -110,7 +107,7 @@ public final class Bridge {
 			SlashCommand command = COMMANDS.get(key);
 			ApplicationCommandRequest cmd = command.Build();
 
-			Server.LOGGER.info("Found command {}", command.getName());
+			Main.LOGGER.info("Found command {}", command.getName());
 			commands.add(cmd);
 		}
 
@@ -123,17 +120,17 @@ public final class Bridge {
 				.doOnNext(gateway -> {
 					RestClient rest = gateway.getRestClient();
 
-					Server.LOGGER.info("Overwriting global application commands.");
+					Main.LOGGER.info("Overwriting global application commands.");
 					rest.getApplicationService()
-							.bulkOverwriteGlobalApplicationCommand(Long.parseLong(applicationId), commands)
-							.doOnError(err -> Server.LOGGER.error("Failed to overwrite global application commands. Error: {}", err.getMessage()))
+							.bulkOverwriteGlobalApplicationCommand(applicationId, commands)
+							.doOnError(err -> Main.LOGGER.error("Failed to overwrite global application commands. Error: {}", err.getMessage()))
 							.subscribe();
+
+					GATEWAY = gateway;
 
 					gateway.on(ReadyEvent.class).subscribe(this::onReady);
 					gateway.on(MessageCreateEvent.class).subscribe(this::onMessage);
 					gateway.on(ChatInputInteractionEvent.class).subscribe(this::onInteraction);
-
-					GATEWAY = gateway;
 				})
 				.flatMap(gateway -> gateway.getChannelById(Snowflake.of(channelId))
 						.filter(Objects::nonNull)
@@ -145,6 +142,8 @@ public final class Bridge {
 
 							// Process queued events now that the bot is ready.
 							ProcessQueue();
+
+							Main.LOGGER.info("Discord bot ready.");
 						}))
 				.subscribe();
 	}
@@ -161,7 +160,7 @@ public final class Bridge {
 		GATEWAY.updatePresence(ClientPresence.online(ClientActivity.playing("Minecraft"))).subscribe();
 		User self = ready.getSelf();
 		BOT_USER_ID = self.getId();
-		Server.LOGGER.info("Logged in as {}", self.getUsername());
+		Main.LOGGER.info("Logged in as {}", self.getUsername());
 	}
 
 	private void onInteraction(ChatInputInteractionEvent event) {
@@ -172,7 +171,7 @@ public final class Bridge {
 		String cmd = event.getCommandName();
 
 		if (COMMANDS.containsKey(cmd)) {
-			Server.LOGGER.info("Executing command {}", cmd);
+			Main.LOGGER.info("Executing command {}", cmd);
 
 			SlashCommand command = COMMANDS.get(cmd);
 			Result<EmbedCreateSpec> embed = command.Execute(SERVER);
@@ -181,14 +180,14 @@ public final class Bridge {
 				event.reply().withEmbeds(embed.getValue()).subscribe();
 			} else {
 				String err = embed.getError();
-				Server.LOGGER.error("Command {} failed to execute. Error: {}", cmd, err);
+				Main.LOGGER.error("Command {} failed to execute. Error: {}", cmd, err);
 				event.reply().withContent(String.format("Command failed to execute. Error: %s", err)).subscribe();
 			}
 
 			return;
 		}
 
-		Server.LOGGER.warn("Unknown command {}", cmd);
+		Main.LOGGER.warn("Unknown command {}", cmd);
 	}
 
 	private void onMessage(MessageCreateEvent event) {
@@ -213,8 +212,8 @@ public final class Bridge {
 				.filter(Objects::nonNull)
 				.flatMap(member -> member.getColor().map(color -> Pair.of(color, member)))
 				.doOnNext(pair -> {
-					Color color = pair.first;
-					Member member = pair.second;
+					Color color = pair.getFirst();
+					Member member = pair.getSecond();
 
 					String content = message.getContent().trim();
 

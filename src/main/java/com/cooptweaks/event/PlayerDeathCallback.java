@@ -1,4 +1,4 @@
-package com.cooptweaks.events;
+package com.cooptweaks.event;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;

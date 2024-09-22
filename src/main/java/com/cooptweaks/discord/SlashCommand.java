@@ -1,6 +1,6 @@
 package com.cooptweaks.discord;
 
-import com.cooptweaks.Result;
+import com.cooptweaks.types.Result;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import net.minecraft.server.MinecraftServer;

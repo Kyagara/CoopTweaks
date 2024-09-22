@@ -1,11 +1,12 @@
-package com.cooptweaks;
+package com.cooptweaks.advancements;
 
-import com.cooptweaks.discord.Bridge;
+import com.cooptweaks.Main;
+import com.cooptweaks.Utils;
+import com.cooptweaks.discord.Discord;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import discord4j.rest.util.Color;
 import net.minecraft.advancement.Advancement;
-import net.minecraft.advancement.AdvancementDisplay;
 import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.command.CommandRegistryAccess;
@@ -25,20 +26,15 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 public final class Advancements {
-	private static MinecraftServer SERVER;
-
-	public static Map<Identifier, AdvancementEntry> ALL_ADVANCEMENTS = new HashMap<>();
-	public static Map<String, AdvancementEntry> COMPLETED_ADVANCEMENTS = new HashMap<>();
-
-	private static FileChannel CURRENT_SEED_FILE;
-
-	private static Advancements INSTANCE = null;
-
 	private Advancements() {
 	}
+
+	private static Advancements INSTANCE = null;
 
 	public static Advancements getInstance() {
 		if (INSTANCE == null) {
@@ -48,16 +44,29 @@ public final class Advancements {
 		return INSTANCE;
 	}
 
+	private static final Discord DISCORD = Main.DISCORD;
+
+	private static MinecraftServer SERVER;
+
+	public static HashMap<Identifier, AdvancementEntry> ALL_ADVANCEMENTS = new HashMap<>();
+	public static HashMap<String, AdvancementEntry> COMPLETED_ADVANCEMENTS = new HashMap<>();
+
+	private static FileChannel CURRENT_SEED_FILE;
+
 	private static synchronized void appendToSave(String text) throws IOException {
 		ByteBuffer buffer = ByteBuffer.wrap(text.getBytes());
 		CURRENT_SEED_FILE.write(buffer);
 	}
 
-	public void LoadAdvancements(MinecraftServer server) {
+	public void LoadAdvancements(MinecraftServer server, Path savePath) {
 		SERVER = server;
 
 		Collection<AdvancementEntry> advancements = server.getAdvancementLoader().getAdvancements();
 		int totalAdvancements = advancements.size();
+		if (totalAdvancements == 0) {
+			Main.LOGGER.error("No advancements to load.");
+			return;
+		}
 
 		ALL_ADVANCEMENTS = new HashMap<>(totalAdvancements);
 		COMPLETED_ADVANCEMENTS = new HashMap<>(totalAdvancements);
@@ -66,9 +75,9 @@ public final class Advancements {
 			ALL_ADVANCEMENTS.put(entry.id(), entry);
 		}
 
-		Server.LOGGER.info("Loaded {} advancements.", totalAdvancements);
+		Main.LOGGER.info("Loaded {} advancements.", totalAdvancements);
 
-		Path save = Config.SAVES.resolve(String.valueOf(server.getOverworld().getSeed()));
+		Path save = savePath.resolve(String.valueOf(server.getOverworld().getSeed()));
 
 		if (!Files.exists(save)) {
 			try {
@@ -77,7 +86,7 @@ public final class Advancements {
 				throw new RuntimeException(e);
 			}
 
-			// No need to continue since we have no data to load.
+			Main.LOGGER.info("No completed advancements data to load. Initialized new save file.");
 			return;
 		}
 
@@ -87,23 +96,31 @@ public final class Advancements {
 
 			while (line != null) {
 				String[] arr = line.split(",");
+				if (arr.length < 2) {
+					Main.LOGGER.warn("Skipping malformed line: {}", line);
+					continue;
+				}
+
 				String entryName = arr[0];
 				String criterionName = arr[1];
 
 				AdvancementEntry entry = ALL_ADVANCEMENTS.get(Identifier.of(entryName));
-				COMPLETED_ADVANCEMENTS.put(criterionName, entry);
+				if (entry != null) {
+					COMPLETED_ADVANCEMENTS.put(criterionName, entry);
+				} else {
+					Main.LOGGER.warn("Advancement entry '{}' not found for criterion '{}'.", entryName, criterionName);
+				}
 
 				line = reader.readLine();
 			}
 
 			reader.close();
-
 			CURRENT_SEED_FILE = FileChannel.open(save, StandardOpenOption.APPEND);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 
-		Server.LOGGER.info("{} completed advancements.", COMPLETED_ADVANCEMENTS.size());
+		Main.LOGGER.info("{} completed advancements.", COMPLETED_ADVANCEMENTS.size());
 	}
 
 	public void SyncPlayerOnJoin(ServerPlayerEntity player, String name) {
@@ -113,60 +130,63 @@ public final class Advancements {
 
 		PlayerAdvancementTracker tracker = player.getAdvancementTracker();
 
-		Server.LOGGER.info("Syncing {} advancements.", name);
+		Main.LOGGER.info("Syncing {} advancements.", name);
 		COMPLETED_ADVANCEMENTS.forEach((key, value) -> tracker.grantCriterion(value, key));
 	}
 
 	public void OnCriterion(ServerPlayerEntity currentPlayer, AdvancementEntry entry, String name, boolean isDone) {
-		if (!COMPLETED_ADVANCEMENTS.containsKey(name)) {
-			COMPLETED_ADVANCEMENTS.put(name, entry);
+		if (COMPLETED_ADVANCEMENTS.containsKey(name)) {
+			return;
+		}
 
-			try {
-				String line = String.format("%s,%s%s", entry.id().toString(), name, System.lineSeparator());
-				appendToSave(line);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+		COMPLETED_ADVANCEMENTS.put(name, entry);
 
-			Advancement advancement = entry.value();
-			Optional<AdvancementDisplay> display = advancement.display();
+		try {
+			String line = String.format("%s,%s\n", entry.id().toString(), name);
+			appendToSave(line);
+		} catch (IOException e) {
+			// This should be handled in another way, has to be recoverable, so we can try again.
+			throw new RuntimeException(e);
+		}
 
-			if (display.isPresent() && isDone) {
-				AdvancementDisplay displayObj = display.get();
-				if (!displayObj.shouldAnnounceToChat()) {
-					return;
-				}
+		Advancement advancement = entry.value();
 
+		advancement.display().ifPresent(display -> {
+			if (isDone && display.shouldAnnounceToChat()) {
 				String playerName = currentPlayer.getName().getString();
 
-				// Send the announcement to the server.
-				MutableText text = Text.literal(playerName + " has made the advancement ").append(advancement.name().get());
+				// Send announcement to the server chat
+				MutableText text = Text.literal(playerName + " has made the advancement ")
+						.append(advancement.name().get());
+
 				SERVER.getPlayerManager().broadcast(text, false);
 
-				// Send the announcement to the Discord channel.
-				String title = displayObj.getTitle().getString();
+				// Send announcement to the Discord channel
+				String title = display.getTitle().getString();
 				if (title.isEmpty()) {
 					title = name;
 				}
 
-				String description = displayObj.getDescription().getString();
+				String description = display.getDescription().getString();
 				String message = String.format("**%s** has made the advancement **%s**!\n*%s*", playerName, title, description);
-				Bridge.getInstance().SendEmbed(message, Color.GREEN);
+				DISCORD.SendEmbed(message, Color.GREEN);
 			}
+		});
 
-			List<ServerPlayerEntity> players = SERVER.getPlayerManager().getPlayerList();
-
-			for (ServerPlayerEntity player : players) {
-				if (currentPlayer != player) {
-					player.getAdvancementTracker().grantCriterion(entry, name);
-				}
+		// Grant the advancement to all players
+		List<ServerPlayerEntity> players = SERVER.getPlayerManager().getPlayerList();
+		for (ServerPlayerEntity player : players) {
+			if (currentPlayer != player) {
+				player.getAdvancementTracker().grantCriterion(entry, name);
 			}
 		}
 	}
 
 	public void RegisterCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
 		dispatcher.register(CommandManager.literal("cooptweaks")
-				.then(CommandManager.literal("progress").executes(this::progressCommand))
+				.then(CommandManager.literal("advancements")
+						.then(CommandManager.literal("progress").executes(this::progressCommand))
+				)
 		);
 	}
 

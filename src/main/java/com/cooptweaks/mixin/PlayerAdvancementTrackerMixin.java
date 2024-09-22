@@ -1,6 +1,6 @@
 package com.cooptweaks.mixin;
 
-import com.cooptweaks.events.GrantCriterionCallback;
+import com.cooptweaks.event.GrantCriterionCallback;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.AdvancementProgress;
