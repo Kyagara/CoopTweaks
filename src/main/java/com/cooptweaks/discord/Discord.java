@@ -160,7 +160,6 @@ public final class Discord {
 		GATEWAY.updatePresence(ClientPresence.online(ClientActivity.playing("Minecraft"))).subscribe();
 		User self = ready.getSelf();
 		BOT_USER_ID = self.getId();
-		Main.LOGGER.info("Logged in as {}", self.getUsername());
 	}
 
 	private void onInteraction(ChatInputInteractionEvent event) {

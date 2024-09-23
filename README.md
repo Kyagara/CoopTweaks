@@ -12,15 +12,11 @@ configurable features in just one package.
 
 - Bridges a Discord channel to the Minecraft server chat, allowing for chat between the two.
 - Send events like advancements, join/leave, death, from the server to Discord.
-- Sync advancements(criterion), so all players can share the same advancement progress.
+- Sync advancements completion, so all players can share the same advancement progress.
 - Discord commands to retrieve information about the server.
 
 ## TODO
 
-- Use the `criterion` instead of `advancement` name in some places.
-- Maybe the revoke of the advancement criterion must also be tracked.
-- There are 122 advancements but the `progress` command shows all criterion for them, giving a much bigger number, might
-  rework how things are done in the class to fix this.
 - Add Discord commands to retrieve general information about the server, TPS, uptime, etc.
 
 ## Configuration
