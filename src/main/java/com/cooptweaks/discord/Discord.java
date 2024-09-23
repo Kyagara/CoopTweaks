@@ -60,7 +60,10 @@ public final class Discord {
 
 	private static MinecraftServer SERVER;
 	private static GatewayDiscordClient GATEWAY;
+
 	private static Snowflake BOT_USER_ID;
+	private static Snowflake CHANNEL_ID;
+
 	private static RestChannel CHANNEL;
 
 	/** Slash commands. */
@@ -138,6 +141,7 @@ public final class Discord {
 						.filter(Objects::nonNull)
 						.doOnNext(channel -> {
 							CHANNEL = channel;
+							CHANNEL_ID = channel.getId();
 							BOT_READY.set(true);
 
 							// Process queued events now that the bot is ready.
@@ -195,6 +199,12 @@ public final class Discord {
 		}
 
 		Message message = event.getMessage();
+
+		// Ignore messages from other channels.
+		if (!message.getChannelId().equals(CHANNEL_ID)) {
+			return;
+		}
+
 		Optional<User> author = message.getAuthor();
 
 		if (author.isEmpty()) {
