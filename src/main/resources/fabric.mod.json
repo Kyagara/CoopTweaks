@@ -3,7 +3,7 @@
   "id": "cooptweaks",
   "version": "${version}",
   "name": "CoopTweaks",
-  "description": "Sync advancements, chat relay for a Discord channel and more.",
+  "description": "Sync advancements, chat relay for Discord and more.",
   "authors": [
     "Kyagara"
   ],

@@ -310,7 +310,7 @@ public final class Discord {
 
 		String text = deathMessage.getString().replace(name, String.format("**%s**", name));
 
-		String message = String.format("%s\n*`%s` at %d, %d, %d*", text, dimension, pos.getX(), pos.getY(), pos.getZ());
+		String message = String.format("%s%n*`%s` at %d, %d, %d*", text, dimension, pos.getX(), pos.getY(), pos.getZ());
 		SendEmbed(message, Color.RED);
 	}
 }
