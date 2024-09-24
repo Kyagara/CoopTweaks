@@ -16,6 +16,7 @@ goal with this is to add on the coop experience I really enjoyed from Cooperativ
 
 ## TODO
 
+- Update the player's dimension when respawning.
 - Add Discord commands to retrieve general information about the server, TPS, uptime, etc.
 - Utils class might need to become a package as more features are added.
 
