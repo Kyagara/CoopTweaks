@@ -19,7 +19,7 @@ public class Utils {
 	 @param player The player's name.
 	 @return The dimension name of the player. Example: "Overworld".
 	 */
-	public static String GetPlayerDimension(String player) {
+	public static String getPlayerDimension(String player) {
 		String dimensionId = Main.PLAYER_CURRENT_DIMENSION_ID.get(player);
 		String dimension = WORLDS.get(dimensionId);
 		if (dimension == null) {
@@ -33,7 +33,7 @@ public class Utils {
 
 	 @return The advancements progress of the server. Example: "10/122".
 	 */
-	public static String GetAdvancementsProgress() {
+	public static String getAdvancementsProgress() {
 		return String.format("%d/%d", Advancements.COMPLETED_ADVANCEMENTS.size(), Advancements.ALL_ADVANCEMENTS.size());
 	}
 }

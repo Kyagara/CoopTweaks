@@ -213,7 +213,7 @@ public final class Advancements {
 	}
 
 	private int progressCommand(CommandContext<ServerCommandSource> context) {
-		context.getSource().sendFeedback(() -> Text.literal(String.format("%s advancements completed so far.", Utils.GetAdvancementsProgress())), false);
+		context.getSource().sendFeedback(() -> Text.literal(String.format("%s advancements completed so far.", Utils.getAdvancementsProgress())), false);
 		return 1;
 	}
 }

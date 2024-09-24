@@ -19,18 +19,6 @@ public final class Configuration {
 
 	private static ConfigMap DISCORD_CONFIG = null;
 
-	public Path getAdvancementsSavePath() {
-		return ADVANCEMENTS_SAVE_PATH;
-	}
-
-	public ConfigMap getDiscordConfig() {
-		if (DISCORD_CONFIG == null) {
-			DISCORD_CONFIG = new ConfigMap(DISCORD_PATH);
-		}
-
-		return DISCORD_CONFIG;
-	}
-
 	/**
 	 Verify that the necessary config files exist, if not, create them, generating the default config files.
 	 <p>
@@ -68,5 +56,17 @@ public final class Configuration {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	public Path getAdvancementsSavePath() {
+		return ADVANCEMENTS_SAVE_PATH;
+	}
+
+	public ConfigMap getDiscordConfig() {
+		if (DISCORD_CONFIG == null) {
+			DISCORD_CONFIG = new ConfigMap(DISCORD_PATH);
+		}
+
+		return DISCORD_CONFIG;
 	}
 }

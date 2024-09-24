@@ -20,7 +20,7 @@ public class Status implements SlashCommand {
 	}
 
 	@Override
-	public ApplicationCommandRequest Build() {
+	public ApplicationCommandRequest build() {
 		return ApplicationCommandRequest.builder()
 				.name(getName())
 				.description(getDescription())
@@ -28,7 +28,7 @@ public class Status implements SlashCommand {
 	}
 
 	@Override
-	public Result<EmbedCreateSpec> Execute(MinecraftServer server) {
+	public Result<EmbedCreateSpec> execute(MinecraftServer server) {
 		if (server == null) {
 			return Result.error("Server is not running.");
 		}
@@ -37,7 +37,7 @@ public class Status implements SlashCommand {
 		String address = String.format("%s:%d", server.getServerIp(), server.getServerPort());
 		String version = server.getVersion();
 		String players = String.format("%d/%d", server.getCurrentPlayerCount(), server.getMaxPlayerCount());
-		String advancements = Utils.GetAdvancementsProgress();
+		String advancements = Utils.getAdvancementsProgress();
 
 		String message = String.format("`MOTD`: %s%n`Address`: %s\n`Version`: %s\n`Players`: %s\n`Advancements`: %s",
 				motd, address, version, players, advancements);
