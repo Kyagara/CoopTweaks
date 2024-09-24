@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class Advancements {
 	private Advancements() {
@@ -50,13 +51,13 @@ public final class Advancements {
 	private static MinecraftServer SERVER;
 
 	public static HashMap<Identifier, AdvancementEntry> ALL_ADVANCEMENTS = new HashMap<>(122);
-	public static HashMap<String, AdvancementEntry> COMPLETED_ADVANCEMENTS = new HashMap<>(122);
+	public static ConcurrentHashMap<String, AdvancementEntry> COMPLETED_ADVANCEMENTS = new ConcurrentHashMap<>(122);
 
 	private static FileChannel CURRENT_SEED_FILE;
 
-	private static synchronized void appendToSave(String text) throws IOException {
+	private static synchronized int appendToSave(String text) throws IOException {
 		ByteBuffer buffer = ByteBuffer.wrap(text.getBytes());
-		CURRENT_SEED_FILE.write(buffer);
+		return CURRENT_SEED_FILE.write(buffer);
 	}
 
 	public void LoadAdvancements(MinecraftServer server, Path savePath) {
@@ -88,7 +89,7 @@ public final class Advancements {
 		for (AdvancementEntry entry : advancements) {
 			Advancement advancement = entry.value();
 
-			// If the advancement has a display, add it to the list of advancements
+			// If the advancement has a display, add it to the list.
 			advancement.display().ifPresent(display -> {
 				ALL_ADVANCEMENTS.put(entry.id(), entry);
 			});
@@ -116,7 +117,7 @@ public final class Advancements {
 		while (line != null) {
 			String[] arr = line.split(",");
 			if (arr.length < 2) {
-				Main.LOGGER.warn("Skipping malformed line: {}", line);
+				Main.LOGGER.warn("Skipping malformed line: '{}'", line.trim());
 				continue;
 			}
 
@@ -150,20 +151,19 @@ public final class Advancements {
 	}
 
 	public void OnCriterion(ServerPlayerEntity currentPlayer, AdvancementEntry entry, String criterionName, boolean isDone) {
-		String id = entry.id().toString();
-		if (COMPLETED_ADVANCEMENTS.containsKey(id)) {
+		if (COMPLETED_ADVANCEMENTS.containsKey(criterionName)) {
 			return;
 		}
 
-		// turn this into a lambda expression or use functional programming
 		Advancement advancement = entry.value();
 		advancement.display().ifPresent(display -> {
 			if (isDone) {
+				String id = entry.id().toString();
 				String playerName = currentPlayer.getName().getString();
 
-				COMPLETED_ADVANCEMENTS.put(id, entry);
+				COMPLETED_ADVANCEMENTS.put(criterionName, entry);
 
-				// Grant the advancement to all players
+				// Grant the advancement to all players.
 				List<ServerPlayerEntity> players = SERVER.getPlayerManager().getPlayerList();
 				for (ServerPlayerEntity player : players) {
 					if (currentPlayer != player) {
@@ -173,7 +173,8 @@ public final class Advancements {
 
 				try {
 					String line = String.format("%s,%s\n", id, criterionName);
-					appendToSave(line);
+					int n = appendToSave(line);
+					Main.LOGGER.info("Saved line '{}' ({} bytes written).", line, n);
 				} catch (IOException e) {
 					// This should be handled in another way, has to be recoverable, so we can try again.
 					throw new RuntimeException(e);
@@ -184,13 +185,13 @@ public final class Advancements {
 					advancementName = Optional.of(Text.literal(criterionName));
 				}
 
-				// Send announcement to the server chat
+				// Send announcement to the server chat.
 				MutableText text = Text.literal(playerName + " has made the advancement ")
 						.append(advancementName.get());
 
 				SERVER.getPlayerManager().broadcast(text, false);
 
-				// Send announcement to the Discord channel
+				// Send announcement to the Discord channel.
 				String title = display.getTitle().getString();
 				if (title.isEmpty()) {
 					title = criterionName;

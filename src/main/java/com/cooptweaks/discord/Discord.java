@@ -87,10 +87,7 @@ public final class Discord {
 	}
 
 	private static void ProcessQueue() {
-		for (Runnable event : new ArrayList<>(QUEUE)) {
-			event.run();
-		}
-
+		QUEUE.forEach(Runnable::run);
 		QUEUE.clear();
 	}
 
@@ -110,7 +107,7 @@ public final class Discord {
 			SlashCommand command = COMMANDS.get(key);
 			ApplicationCommandRequest cmd = command.Build();
 
-			Main.LOGGER.info("Found command {}", command.getName());
+			Main.LOGGER.info("Found command '{}'", command.getName());
 			commands.add(cmd);
 		}
 
@@ -174,7 +171,7 @@ public final class Discord {
 		String cmd = event.getCommandName();
 
 		if (COMMANDS.containsKey(cmd)) {
-			Main.LOGGER.info("Executing command {}", cmd);
+			Main.LOGGER.info("Executing command '{}'", cmd);
 
 			SlashCommand command = COMMANDS.get(cmd);
 			Result<EmbedCreateSpec> embed = command.Execute(SERVER);
@@ -183,14 +180,14 @@ public final class Discord {
 				event.reply().withEmbeds(embed.getValue()).subscribe();
 			} else {
 				String err = embed.getError();
-				Main.LOGGER.error("Command {} failed to execute. Error: {}", cmd, err);
+				Main.LOGGER.error("Command '{}' failed to execute. Error: {}", cmd, err);
 				event.reply().withContent(String.format("Command failed to execute. Error: %s", err)).subscribe();
 			}
 
 			return;
 		}
 
-		Main.LOGGER.warn("Unknown command {}", cmd);
+		Main.LOGGER.warn("Unknown command '{}'", cmd);
 	}
 
 	private void onMessage(MessageCreateEvent event) {
