@@ -39,7 +39,7 @@ public class Status implements SlashCommand {
 		String players = String.format("%d/%d", server.getCurrentPlayerCount(), server.getMaxPlayerCount());
 		String advancements = Utils.GetAdvancementsProgress();
 
-		String message = String.format("`MOTD`: %s\n`Address`: %s\n`Version`: %s\n`Players`: %s\n`Advancements`: %s",
+		String message = String.format("`MOTD`: %s%n`Address`: %s\n`Version`: %s\n`Players`: %s\n`Advancements`: %s",
 				motd, address, version, players, advancements);
 
 		return Result.success(EmbedCreateSpec.builder()

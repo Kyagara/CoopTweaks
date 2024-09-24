@@ -38,7 +38,7 @@ public final class Advancements {
 
 	private static Advancements INSTANCE = null;
 
-	public static Advancements getInstance() {
+	public synchronized static Advancements getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new Advancements();
 		}
@@ -50,8 +50,8 @@ public final class Advancements {
 
 	private static MinecraftServer SERVER;
 
-	public static HashMap<Identifier, AdvancementEntry> ALL_ADVANCEMENTS = new HashMap<>(122);
-	public static ConcurrentHashMap<String, AdvancementEntry> COMPLETED_ADVANCEMENTS = new ConcurrentHashMap<>(122);
+	public static final HashMap<Identifier, AdvancementEntry> ALL_ADVANCEMENTS = new HashMap<>(122);
+	public static final ConcurrentHashMap<String, AdvancementEntry> COMPLETED_ADVANCEMENTS = new ConcurrentHashMap<>(122);
 
 	private static FileChannel CURRENT_SEED_FILE;
 
@@ -172,7 +172,7 @@ public final class Advancements {
 				}
 
 				try {
-					String line = String.format("%s,%s\n", id, criterionName);
+					String line = String.format("%s,%s%n", id, criterionName);
 					int n = appendToSave(line);
 					Main.LOGGER.info("Saved line '{}' ({} bytes written).", line, n);
 				} catch (IOException e) {
@@ -198,7 +198,7 @@ public final class Advancements {
 				}
 
 				String description = display.getDescription().getString();
-				String message = String.format("**%s** has made the advancement **%s**!\n*%s*", playerName, title, description);
+				String message = String.format("**%s** has made the advancement **%s**!%n*%s*", playerName, title, description);
 				DISCORD.SendEmbed(message, Color.GREEN);
 			}
 		});

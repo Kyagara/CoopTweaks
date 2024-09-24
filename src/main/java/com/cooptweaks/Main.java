@@ -26,7 +26,7 @@ public class Main implements ModInitializer {
 	public static final Advancements ADVANCEMENTS = Advancements.getInstance();
 
 	/** Maps player names to their current dimension. */
-	public static HashMap<String, String> PLAYER_CURRENT_DIMENSION_ID = new HashMap<>();
+	public static final HashMap<String, String> PLAYER_CURRENT_DIMENSION_ID = new HashMap<>();
 
 	@Override
 	public void onInitialize() {
