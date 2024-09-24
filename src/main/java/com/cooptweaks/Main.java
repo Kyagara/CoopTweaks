@@ -7,6 +7,7 @@ import com.cooptweaks.event.PlayerDeathCallback;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -14,7 +15,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Main implements ModInitializer {
 	public static final String MOD_ID = "cooptweaks";
@@ -26,7 +27,7 @@ public class Main implements ModInitializer {
 	public static final Advancements ADVANCEMENTS = Advancements.getInstance();
 
 	/** Maps player names to their current dimension. */
-	public static final HashMap<String, String> PLAYER_CURRENT_DIMENSION_ID = new HashMap<>();
+	private static final ConcurrentHashMap<String, String> PLAYER_CURRENT_DIMENSION_ID = new ConcurrentHashMap<>();
 
 	@Override
 	public void onInitialize() {
@@ -51,9 +52,7 @@ public class Main implements ModInitializer {
 			String name = player.getName().getString();
 			String dimensionId = player.getWorld().getRegistryKey().getValue().toString();
 
-			// Update the player's current dimension.
-			PLAYER_CURRENT_DIMENSION_ID.put(name, dimensionId);
-
+			updatePlayerCurrentDimension(name, dimensionId);
 			DISCORD.PlayerJoined(name);
 			ADVANCEMENTS.SyncPlayerOnJoin(player, name);
 		});
@@ -71,15 +70,30 @@ public class Main implements ModInitializer {
 			String name = player.getName().getString();
 			String dimensionId = newWorld.getRegistryKey().getValue().toString();
 
-			// Update the player's current dimension.
-			PLAYER_CURRENT_DIMENSION_ID.put(name, dimensionId);
-
+			updatePlayerCurrentDimension(name, dimensionId);
 			DISCORD.PlayerChangedDimension(name, Utils.getPlayerDimension(name));
+		});
+
+		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+			String name = newPlayer.getName().getString();
+			String dimensionId = newPlayer.getWorld().getRegistryKey().getValue().toString();
+
+			updatePlayerCurrentDimension(name, dimensionId);
 		});
 
 		PlayerDeathCallback.EVENT.register(DISCORD::PlayerDied);
 		GrantCriterionCallback.EVENT.register(ADVANCEMENTS::OnCriterion);
 
 		CommandRegistrationCallback.EVENT.register(ADVANCEMENTS::RegisterCommands);
+	}
+
+	/** Gets the current dimension ID of a player. */
+	public static String getPlayerCurrentDimension(String name) {
+		return PLAYER_CURRENT_DIMENSION_ID.get(name);
+	}
+
+	/** Updates the current dimension ID of a player. */
+	public static void updatePlayerCurrentDimension(String name, String dimensionId) {
+		PLAYER_CURRENT_DIMENSION_ID.put(name, dimensionId);
 	}
 }

@@ -20,7 +20,7 @@ public class Utils {
 	 @return The dimension name of the player. Example: "Overworld".
 	 */
 	public static String getPlayerDimension(String player) {
-		String dimensionId = Main.PLAYER_CURRENT_DIMENSION_ID.get(player);
+		String dimensionId = Main.getPlayerCurrentDimension(player);
 		String dimension = WORLDS.get(dimensionId);
 		if (dimension == null) {
 			return dimensionId;
