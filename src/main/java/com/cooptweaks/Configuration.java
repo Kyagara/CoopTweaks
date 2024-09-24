@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-public class Configuration {
+public final class Configuration {
 	/** Main config folder path. */
 	private static final Path MAIN_PATH = FabricLoader.getInstance().getConfigDir().resolve("cooptweaks");
 

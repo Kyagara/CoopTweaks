@@ -30,7 +30,6 @@ public class Utils {
 
 	/**
 	 Gets the advancements progress of the server.
-	 Currently only takes into account the number of criterion, the total is very inaccurate.
 
 	 @return The advancements progress of the server. Example: "10/122".
 	 */
