@@ -104,7 +104,7 @@ public final class Discord {
 		List<ApplicationCommandRequest> commands = new ArrayList<>(COMMANDS.size());
 
 		for (SlashCommand command : COMMANDS.values()) {
-			ApplicationCommandRequest cmd = command.Build();
+			ApplicationCommandRequest cmd = command.build();
 			Main.LOGGER.info("Found command '{}'", command.getName());
 			commands.add(cmd);
 		}
@@ -172,7 +172,7 @@ public final class Discord {
 			Main.LOGGER.info("Executing command '{}'", cmd);
 
 			SlashCommand command = COMMANDS.get(cmd);
-			Result<EmbedCreateSpec> embed = command.Execute(SERVER);
+			Result<EmbedCreateSpec> embed = command.execute(SERVER);
 
 			if (embed.isSuccess()) {
 				event.reply().withEmbeds(embed.getValue()).subscribe();
@@ -292,7 +292,7 @@ public final class Discord {
 		}
 
 		String name = player.getName().getString();
-		String dimension = Utils.GetPlayerDimension(name);
+		String dimension = Utils.getPlayerDimension(name);
 
 		String text = String.format("`%s` **%s** >> %s", dimension, name, message.getContent().getString());
 		CHANNEL.createMessage(text).subscribe();
@@ -305,7 +305,7 @@ public final class Discord {
 
 	public void PlayerDied(ServerPlayerEntity serverPlayerEntity, GlobalPos lastDeathPos, Text deathMessage) {
 		String name = serverPlayerEntity.getName().getString();
-		String dimension = Utils.GetPlayerDimension(name);
+		String dimension = Utils.getPlayerDimension(name);
 		BlockPos pos = lastDeathPos.pos();
 
 		String text = deathMessage.getString().replace(name, String.format("**%s**", name));

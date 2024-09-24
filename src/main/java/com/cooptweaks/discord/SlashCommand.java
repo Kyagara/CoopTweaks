@@ -13,7 +13,7 @@ public interface SlashCommand {
 	String getDescription();
 
 	/** The {@link ApplicationCommandRequest} to be sent to Discord, can include description, permissions, options, etc. */
-	ApplicationCommandRequest Build();
+	ApplicationCommandRequest build();
 
 	/**
 	 Executes the command by building an embed for the response.
@@ -21,5 +21,5 @@ public interface SlashCommand {
 	 @param server The server that the command is being executed on.
 	 @return Returns a {@link Result} containing the {@link EmbedCreateSpec} value if successful, or a {@link String} error if not.
 	 */
-	Result<EmbedCreateSpec> Execute(MinecraftServer server);
+	Result<EmbedCreateSpec> execute(MinecraftServer server);
 }

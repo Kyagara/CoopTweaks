@@ -74,7 +74,7 @@ public class Main implements ModInitializer {
 			// Update the player's current dimension.
 			PLAYER_CURRENT_DIMENSION_ID.put(name, dimensionId);
 
-			DISCORD.PlayerChangedDimension(name, Utils.GetPlayerDimension(name));
+			DISCORD.PlayerChangedDimension(name, Utils.getPlayerDimension(name));
 		});
 
 		PlayerDeathCallback.EVENT.register(DISCORD::PlayerDied);
