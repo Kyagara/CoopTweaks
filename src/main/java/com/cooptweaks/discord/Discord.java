@@ -50,7 +50,7 @@ public final class Discord {
 
 	private static Discord INSTANCE = null;
 
-	public static Discord getInstance() {
+	public synchronized static Discord getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new Discord();
 		}
@@ -103,10 +103,8 @@ public final class Discord {
 
 		List<ApplicationCommandRequest> commands = new ArrayList<>(COMMANDS.size());
 
-		for (String key : COMMANDS.keySet()) {
-			SlashCommand command = COMMANDS.get(key);
+		for (SlashCommand command : COMMANDS.values()) {
 			ApplicationCommandRequest cmd = command.Build();
-
 			Main.LOGGER.info("Found command '{}'", command.getName());
 			commands.add(cmd);
 		}
