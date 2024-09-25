@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "com.cooptweaks.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "client": [
+  ],
+  "mixins": [
+    "PlayerAdvancementTrackerMixin",
+    "PlayerEntityAccessor",
+    "ServerPlayerEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

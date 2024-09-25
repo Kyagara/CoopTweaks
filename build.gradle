@@ -1,78 +1,68 @@
 plugins {
-	id 'fabric-loom' version '1.7-SNAPSHOT'
-	id 'com.gradleup.shadow' version '8.3.2'
+    id 'dev.architectury.loom' version '1.7-SNAPSHOT' apply false
+    id 'architectury-plugin' version '3.4-SNAPSHOT'
+    id 'com.gradleup.shadow' version '8.3.2' apply false
+
+    id "io.github.pacifistmc.forgix" version "1.2.9"
 }
 
-version = project.mod_version
-group = project.maven_group
-
-base {
-	archivesName = project.archives_base_name
+architectury {
+    minecraft = project.minecraft_version
 }
 
-repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+allprojects {
+    group = rootProject.maven_group
+    version = rootProject.mod_version
 }
 
-loom {
-	splitEnvironmentSourceSets()
+forgix {
+    group = rootProject.maven_group
+    mergedJarName = "cooptweaks-${rootProject.mod_version}-fabric-neoforge.jar"
+    outputDir = "build"
 
-	mods {
-		"cooptweaks" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
+    if (findProject(":neoforge"))
+        neoforge {
+            jarLocation = "build/libs/cooptweaks-neoforge-${rootProject.mod_version}.jar"
+        }
+
+    if (findProject(":fabric"))
+        fabric {
+            jarLocation = "build/libs/cooptweaks-fabric-${rootProject.mod_version}.jar"
+        }
 }
 
-dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+subprojects {
+    apply plugin: 'dev.architectury.loom'
+    apply plugin: 'architectury-plugin'
 
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    base {
+        archivesName = "$rootProject.archives_name-$project.name"
+    }
 
-	shadow implementation("com.discord4j:discord4j-core:${project.discord4j_version}")
-}
+    repositories {
+        // Add repositories to retrieve artifacts from in here.
+        // You should only use this when depending on other mods because
+        // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+        // See https://docs.gradle.org/current/userguide/declaring_repositories.html
+        // for more information about repositories.
+    }
 
-shadowJar {
-	configurations = [project.configurations.shadow]
-	from(sourceSets.client.output)
-}
+    dependencies {
+        minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
+        mappings loom.layered {
+            it.mappings("net.fabricmc:yarn:$rootProject.yarn_mappings:v2")
+            it.mappings("dev.architectury:yarn-mappings-patch-neoforge:$rootProject.yarn_mappings_patch_neoforge_version")
+        }
+    }
 
-remapJar {
-	dependsOn(shadowJar)
-	inputFile = tasks.shadowJar.archiveFile
-}
+    java {
+        withSourcesJar()
 
-processResources {
-	inputs.property "version", project.version
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
 
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
-}
-
-java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
-
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
-}
-
-jar {
-	from("LICENSE") {
-		rename { "${it}_${project.base.archivesName.get()}"}
-	}
+    tasks.withType(JavaCompile).configureEach {
+        it.options.release = 21
+    }
 }
