@@ -1,7 +1,7 @@
 plugins {
-    id 'dev.architectury.loom' version '1.7-SNAPSHOT' apply false
-    id 'architectury-plugin' version '3.4-SNAPSHOT'
-    id 'com.gradleup.shadow' version '8.3.2' apply false
+    id "dev.architectury.loom" version "1.7-SNAPSHOT" apply false
+    id "architectury-plugin" version "3.4-SNAPSHOT"
+    id "com.gradleup.shadow" version "8.3.2" apply false
 
     id "io.github.pacifistmc.forgix" version "1.2.9"
 }
@@ -11,32 +11,34 @@ architectury {
 }
 
 allprojects {
-    group = rootProject.maven_group
-    version = rootProject.mod_version
+    group = project.maven_group
+    version = project.mod_version
 }
 
 forgix {
-    group = rootProject.maven_group
-    mergedJarName = "cooptweaks-${rootProject.mod_version}-fabric-neoforge.jar"
+    group = project.maven_group
+    mergedJarName = "cooptweaks-${project.mod_version}-fabric-neoforge.jar"
     outputDir = "build"
 
-    if (findProject(":neoforge"))
+    if (findProject(":neoforge")) {
         neoforge {
-            jarLocation = "build/libs/cooptweaks-neoforge-${rootProject.mod_version}.jar"
+            jarLocation = "build/libs/cooptweaks-neoforge-${project.mod_version}.jar"
         }
+    }
 
-    if (findProject(":fabric"))
+    if (findProject(":fabric")) {
         fabric {
-            jarLocation = "build/libs/cooptweaks-fabric-${rootProject.mod_version}.jar"
+            jarLocation = "build/libs/cooptweaks-fabric-${project.mod_version}.jar"
         }
+    }
 }
 
 subprojects {
-    apply plugin: 'dev.architectury.loom'
-    apply plugin: 'architectury-plugin'
+    apply plugin: "dev.architectury.loom"
+    apply plugin: "architectury-plugin"
 
     base {
-        archivesName = "$rootProject.archives_name-$project.name"
+        archivesName = "$project.archives_name-$project.name"
     }
 
     repositories {
@@ -48,10 +50,10 @@ subprojects {
     }
 
     dependencies {
-        minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
+        minecraft "net.minecraft:minecraft:$project.minecraft_version"
         mappings loom.layered {
-            it.mappings("net.fabricmc:yarn:$rootProject.yarn_mappings:v2")
-            it.mappings("dev.architectury:yarn-mappings-patch-neoforge:$rootProject.yarn_mappings_patch_neoforge_version")
+            it.mappings("net.fabricmc:yarn:$project.yarn_mappings:v2")
+            it.mappings("dev.architectury:yarn-mappings-patch-neoforge:$project.yarn_mappings_patch_neoforge_version")
         }
     }
 
@@ -65,4 +67,7 @@ subprojects {
     tasks.withType(JavaCompile).configureEach {
         it.options.release = 21
     }
+
+    build.finalizedBy(mergeJars)
+    assemble.finalizedBy(mergeJars)
 }
