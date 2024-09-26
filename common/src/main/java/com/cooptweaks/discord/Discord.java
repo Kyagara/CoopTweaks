@@ -1,7 +1,8 @@
 package com.cooptweaks.discord;
 
+import com.cooptweaks.Configuration;
+import com.cooptweaks.Dimension;
 import com.cooptweaks.Main;
-import com.cooptweaks.Utils;
 import com.cooptweaks.discord.commands.Status;
 import com.cooptweaks.types.ConfigMap;
 import com.cooptweaks.types.Result;
@@ -43,18 +44,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Discord {
-	private Discord() {
-	}
-
-	private static Discord INSTANCE = null;
-
-	public synchronized static Discord getInstance() {
-		if (INSTANCE == null) {
-			INSTANCE = new Discord();
-		}
-
-		return INSTANCE;
-	}
+	/** Whether the bot has finished setting up all necessary components. */
+	private static final AtomicBoolean BOT_READY = new AtomicBoolean(false);
 
 	private static MinecraftServer SERVER;
 	private static GatewayDiscordClient GATEWAY;
@@ -65,13 +56,9 @@ public final class Discord {
 	private static RestChannel CHANNEL;
 
 	/** Slash commands. */
-	// Not sure if a map is the best way to do this.
 	private static final HashMap<String, SlashCommand> COMMANDS = new HashMap<>(Map.of(
 			"status", new Status()
 	));
-
-	/** Whether the bot has finished setting up all necessary components. */
-	private static final AtomicBoolean BOT_READY = new AtomicBoolean(false);
 
 	/** Queue of events to be processed after the bot is ready. */
 	private static final List<Runnable> QUEUE = new ArrayList<>(2);
@@ -89,13 +76,14 @@ public final class Discord {
 		QUEUE.clear();
 	}
 
-	public void Start(ConfigMap config) {
+	public void Start() {
+		ConfigMap config = new ConfigMap(Configuration.DISCORD_PATH);
 		String token = config.get("token").toString();
 		String channelId = config.get("channel_id").toString();
 		long applicationId = config.get("application_id").toLong();
 
 		if (token.isEmpty() || channelId.isEmpty() || applicationId == 0) {
-			Main.LOGGER.error("Discord bot is not properly configured.");
+			Main.LOGGER.error("Some Discord configuration fields are missing, skipping Discord bot setup.");
 			return;
 		}
 
@@ -103,7 +91,7 @@ public final class Discord {
 
 		for (SlashCommand command : COMMANDS.values()) {
 			ApplicationCommandRequest cmd = command.build();
-			Main.LOGGER.info("Found command '{}'", command.getName());
+			Main.LOGGER.info("Found command '{}'.", command.getName());
 			commands.add(cmd);
 		}
 
@@ -140,15 +128,15 @@ public final class Discord {
 							// Process queued events now that the bot is ready.
 							ProcessQueue();
 
-							Main.LOGGER.info("Discord bot ready.");
+							Main.LOGGER.info("Discord bot online and ready.");
 						}))
 				.subscribe();
 	}
 
 	public void Stop() {
-		SendEmbed("Server stopping.", Color.RED);
-
 		if (BOT_READY.get()) {
+			SendEmbed("Server stopping.", Color.RED);
+			Main.LOGGER.info("Logging out of Discord.");
 			GATEWAY.logout().block();
 		}
 	}
@@ -277,7 +265,8 @@ public final class Discord {
 	}
 
 	public void PlayerJoined(String name) {
-		SendEmbed(String.format("**%s** joined!", name), Color.GREEN);
+		// In the case on an integrated server, this event might not be called, so queue the event instead.
+		QueueEvent(() -> SendEmbed(String.format("**%s** joined!", name), Color.GREEN));
 	}
 
 	public void PlayerLeft(ServerPlayerEntity player) {
@@ -290,7 +279,7 @@ public final class Discord {
 		}
 
 		String name = player.getName().getString();
-		String dimension = Utils.getPlayerDimension(name);
+		String dimension = Dimension.getPlayerDimension(name);
 
 		String text = String.format("`%s` **%s** >> %s", dimension, name, message.getString());
 		CHANNEL.createMessage(text).subscribe();
@@ -302,8 +291,7 @@ public final class Discord {
 	}
 
 	public void PlayerDied(String name, BlockPos pos, Text deathMessage) {
-		String dimension = Utils.getPlayerDimension(name);
-
+		String dimension = Dimension.getPlayerDimension(name);
 		String text = deathMessage.getString().replace(name, String.format("**%s**", name));
 
 		String message = String.format("%s%n*`%s` at %d, %d, %d*", text, dimension, pos.getX(), pos.getY(), pos.getZ());

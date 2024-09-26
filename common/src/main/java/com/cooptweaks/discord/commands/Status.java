@@ -1,6 +1,6 @@
 package com.cooptweaks.discord.commands;
 
-import com.cooptweaks.Utils;
+import com.cooptweaks.advancements.Advancements;
 import com.cooptweaks.discord.SlashCommand;
 import com.cooptweaks.types.Result;
 import discord4j.core.spec.EmbedCreateSpec;
@@ -37,7 +37,7 @@ public class Status implements SlashCommand {
 		String address = String.format("%s:%d", server.getServerIp(), server.getServerPort());
 		String version = server.getVersion();
 		String players = String.format("%d/%d", server.getCurrentPlayerCount(), server.getMaxPlayerCount());
-		String advancements = Utils.getAdvancementsProgress();
+		String advancements = Advancements.getAdvancementsProgress();
 
 		String message = String.format("`MOTD`: %s%n`Address`: %s%n`Version`: %s%n`Players`: %s%n`Advancements`: %s",
 				motd, address, version, players, advancements);

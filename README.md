@@ -17,9 +17,8 @@ goal with this is to add on the coop experience I really enjoyed from Cooperativ
 ## TODO
 
 - Build system needs some work, merging jars is really slow, shadowing is probably not done right, add sources to the artifacts.
+- Prevent toast from showing for synced players, at the moment the player that was synced will get a toast notification after completing the already completed advancement.
 - Add Discord commands to retrieve general information about the server, TPS, uptime, etc.
-- Maybe move dimension logic to a separate class, maybe in the Discord package.
-- Utils class might need to become a package as more features are added.
 
 ## Configuration
 
