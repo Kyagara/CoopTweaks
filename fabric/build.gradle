@@ -1,5 +1,5 @@
 plugins {
-    id 'com.gradleup.shadow'
+    id "com.gradleup.shadow"
 }
 
 architectury {
@@ -12,6 +12,7 @@ configurations {
         canBeResolved = true
         canBeConsumed = false
     }
+
     compileClasspath.extendsFrom common
     runtimeClasspath.extendsFrom common
     developmentFabric.extendsFrom common
@@ -25,29 +26,34 @@ configurations {
 }
 
 dependencies {
-    modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
+    modImplementation "net.fabricmc:fabric-loader:$project.fabric_loader_version"
 
     // Fabric API. This is technically optional, but you probably want it anyway.
-    modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_api_version"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:$project.fabric_api_version"
 
     // Architectury API. This is optional, and you can comment it out if you don't need it.
-    modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
+    modImplementation "dev.architectury:architectury-fabric:$project.architectury_api_version"
 
-    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
-    shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
+    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    shadowBundle project(path: ":common", configuration: "transformProductionFabric")
+
+    shadowBundle implementation("com.discord4j:discord4j-core:${project.discord4j_version}")
 }
 
 processResources {
-    inputs.property 'version', project.version
+    inputs.property "version", project.version
 
-    filesMatching('fabric.mod.json') {
+    filesMatching("fabric.mod.json") {
         expand version: project.version
     }
 }
 
 shadowJar {
     configurations = [project.configurations.shadowBundle]
-    archiveClassifier = 'dev-shadow'
+    archiveClassifier = "dev-shadow"
+    relocate 'io.netty', 'shadow.io.netty'
+    relocate 'org.checkerframework', 'shadow.org.checkerframework'
+    relocate 'com.google', 'shadow.com.google'
 }
 
 remapJar {

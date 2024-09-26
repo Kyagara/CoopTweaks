@@ -38,7 +38,6 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.GlobalPos;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -302,10 +301,8 @@ public final class Discord {
 		SendEmbed(message, Color.BLACK);
 	}
 
-	public void PlayerDied(ServerPlayerEntity serverPlayerEntity, GlobalPos lastDeathPos, Text deathMessage) {
-		String name = serverPlayerEntity.getName().getString();
+	public void PlayerDied(String name, BlockPos pos, Text deathMessage) {
 		String dimension = Utils.getPlayerDimension(name);
-		BlockPos pos = lastDeathPos.pos();
 
 		String text = deathMessage.getString().replace(name, String.format("**%s**", name));
 
