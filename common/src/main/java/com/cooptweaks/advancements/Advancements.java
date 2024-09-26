@@ -1,7 +1,7 @@
 package com.cooptweaks.advancements;
 
+import com.cooptweaks.Configuration;
 import com.cooptweaks.Main;
-import com.cooptweaks.Utils;
 import com.cooptweaks.discord.Discord;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
@@ -33,25 +33,12 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class Advancements {
-	private Advancements() {
-	}
-
-	private static Advancements INSTANCE = null;
-
-	public synchronized static Advancements getInstance() {
-		if (INSTANCE == null) {
-			INSTANCE = new Advancements();
-		}
-
-		return INSTANCE;
-	}
-
 	private static final Discord DISCORD = Main.DISCORD;
 
 	private static MinecraftServer SERVER;
 
-	public static final HashMap<Identifier, AdvancementEntry> ALL_ADVANCEMENTS = new HashMap<>(122);
-	public static final ConcurrentHashMap<String, AdvancementEntry> COMPLETED_ADVANCEMENTS = new ConcurrentHashMap<>(122);
+	private static final HashMap<Identifier, AdvancementEntry> ALL_ADVANCEMENTS = HashMap.newHashMap(122);
+	private static final ConcurrentHashMap<String, AdvancementEntry> COMPLETED_ADVANCEMENTS = new ConcurrentHashMap<>(122);
 
 	private static FileChannel CURRENT_SEED_FILE;
 
@@ -60,7 +47,7 @@ public final class Advancements {
 		return CURRENT_SEED_FILE.write(buffer);
 	}
 
-	public void LoadAdvancements(MinecraftServer server, Path savePath) {
+	public void LoadAdvancements(MinecraftServer server) {
 		SERVER = server;
 
 		int totalAdvancements = loadServerAdvancements(server);
@@ -72,7 +59,7 @@ public final class Advancements {
 		}
 
 		try {
-			int savedAdvancements = loadSaveAdvancements(server, savePath);
+			int savedAdvancements = loadSaveAdvancements(server, Configuration.ADVANCEMENTS_SAVE_PATH);
 			if (savedAdvancements == 0) {
 				Main.LOGGER.info("No completed advancements data to load. Initialized new save file.");
 			} else {
@@ -212,8 +199,17 @@ public final class Advancements {
 		);
 	}
 
+	/**
+	 Gets the advancements progress of the server.
+
+	 @return The advancements progress of the server. Example: "10/122".
+	 */
+	public static String getAdvancementsProgress() {
+		return String.format("%d/%d", COMPLETED_ADVANCEMENTS.size(), ALL_ADVANCEMENTS.size());
+	}
+
 	private int progressCommand(CommandContext<ServerCommandSource> context) {
-		context.getSource().sendFeedback(() -> Text.literal(String.format("%s advancements completed so far.", Utils.getAdvancementsProgress())), false);
+		context.getSource().sendFeedback(() -> Text.literal(String.format("%s advancements completed so far.", getAdvancementsProgress())), false);
 		return 1;
 	}
 }
