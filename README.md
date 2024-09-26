@@ -16,7 +16,7 @@ goal with this is to add on the coop experience I really enjoyed from Cooperativ
 
 ## TODO
 
-- Build system needs some work, merging jars is really slow, shadowing is probably not done right.
+- Build system needs some work, merging jars is really slow, shadowing is probably not done right, add sources to the artifacts.
 - Add Discord commands to retrieve general information about the server, TPS, uptime, etc.
 - Maybe move dimension logic to a separate class, maybe in the Discord package.
 - Utils class might need to become a package as more features are added.
