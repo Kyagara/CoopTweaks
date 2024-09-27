@@ -1,6 +1,6 @@
-package com.cooptweaks.advancements.commands;
+package com.cooptweaks.commands.advancements;
 
-import com.cooptweaks.advancements.Advancements;
+import com.cooptweaks.Advancements;
 import com.cooptweaks.commands.ServerCommand;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;

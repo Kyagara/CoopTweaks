@@ -1,8 +1,8 @@
-package com.cooptweaks.discord.commands;
+package com.cooptweaks.commands.discord;
 
+import com.cooptweaks.Advancements;
 import com.cooptweaks.Main;
-import com.cooptweaks.advancements.Advancements;
-import com.cooptweaks.discord.SlashCommand;
+import com.cooptweaks.commands.SlashCommand;
 import com.cooptweaks.types.Result;
 import com.cooptweaks.utils.TimeSince;
 import discord4j.core.spec.EmbedCreateSpec;

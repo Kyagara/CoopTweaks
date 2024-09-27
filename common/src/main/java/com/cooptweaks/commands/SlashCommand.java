@@ -1,4 +1,4 @@
-package com.cooptweaks.discord;
+package com.cooptweaks.commands;
 
 import com.cooptweaks.types.Result;
 import discord4j.core.spec.EmbedCreateSpec;

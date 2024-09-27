@@ -1,9 +1,7 @@
-package com.cooptweaks.discord;
+package com.cooptweaks;
 
-import com.cooptweaks.Configuration;
-import com.cooptweaks.Dimension;
-import com.cooptweaks.Main;
-import com.cooptweaks.discord.commands.Status;
+import com.cooptweaks.commands.SlashCommand;
+import com.cooptweaks.commands.discord.Status;
 import com.cooptweaks.types.ConfigMap;
 import com.cooptweaks.types.Result;
 import com.cooptweaks.utils.TimeSince;
@@ -329,7 +327,7 @@ public final class Discord {
 		String dimension = Dimension.getPlayerDimension(name);
 		String text = deathMessage.getString().replace(name, String.format("**%s**", name));
 
-		String message = String.format("%s%n*`%s` at %d, %d, %d*", text, dimension, pos.getX(), pos.getY(), pos.getZ());
+		String message = String.format("%s%n*`%s` at %d / %d / %d*", text, dimension, pos.getX(), pos.getY(), pos.getZ());
 		sendEmbed(message, Color.RED);
 	}
 }
