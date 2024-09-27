@@ -5,6 +5,7 @@ import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import net.minecraft.server.MinecraftServer;
 
+/** A Discord slash command. */
 public interface SlashCommand {
 	/** The name of the command. */
 	String getName();

@@ -3,16 +3,12 @@ package com.cooptweaks.advancements;
 import com.cooptweaks.Configuration;
 import com.cooptweaks.Main;
 import com.cooptweaks.discord.Discord;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.context.CommandContext;
 import discord4j.rest.util.Color;
 import net.minecraft.advancement.Advancement;
+import net.minecraft.advancement.AdvancementCriterion;
 import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.PlayerAdvancementTracker;
-import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -26,25 +22,53 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ Manages advancements and criteria syncing.
+ <p>
+ <p>
+ Startup:
+ <ol>
+ <li>Load all advancements and criteria from the server loaded by mods and the game.</li>
+ <li>Load all completed advancements from the save file, the file is named by the world seed.</li>
+ </ol>
+ p>
+ Syncing:
+ <ol>
+ <li>When an advancement is completed, append the save file with the advancement {@link Identifier}.</li>
+ <li>Send a message to the server chat(disabling the original announceAdvancement broadcast) and Discord channel.</li>
+ <li>When a player joins the server, go though all completed advancements and grant the criteria for each to the player.</li>
+ </ol>
+ */
 public final class Advancements {
 	private static final Discord DISCORD = Main.DISCORD;
 
 	private static MinecraftServer SERVER;
 
+	/** Map of all advancements. Loaded at startup. */
 	private static final HashMap<Identifier, AdvancementEntry> ALL_ADVANCEMENTS = HashMap.newHashMap(122);
-	private static final ConcurrentHashMap<String, AdvancementEntry> COMPLETED_ADVANCEMENTS = new ConcurrentHashMap<>(122);
+
+	/**
+	 Map of criteria for each advancement. Loaded at startup.
+	 <p>
+	 Maps the advancement {@link AdvancementEntry#id() identifier} to a list of criteria.
+	 */
+	private static final HashMap<Identifier, List<String>> ALL_CRITERIA = new HashMap<>(122);
+
+	/**
+	 Map of all completed advancements. Loaded from the save file.
+	 <p>
+	 Maps the advancement {@link AdvancementEntry#id() identifier} to the {@link AdvancementEntry}.
+	 */
+	private static final ConcurrentHashMap<Identifier, AdvancementEntry> COMPLETED_ADVANCEMENTS = new ConcurrentHashMap<>(122);
 
 	private static FileChannel CURRENT_SEED_FILE;
 
-	private static synchronized int appendToSave(String text) throws IOException {
+	private static synchronized void appendToSave(String text) throws IOException {
 		ByteBuffer buffer = ByteBuffer.wrap(text.getBytes());
-		return CURRENT_SEED_FILE.write(buffer);
+		CURRENT_SEED_FILE.write(buffer);
 	}
 
 	public void LoadAdvancements(MinecraftServer server) {
@@ -58,8 +82,14 @@ public final class Advancements {
 			Main.LOGGER.info("Loaded {} advancements from the server.", totalAdvancements);
 		}
 
+		if (ALL_CRITERIA.isEmpty()) {
+			Main.LOGGER.error("No criteria loaded from the server.");
+		} else {
+			Main.LOGGER.info("Loaded {} criteria from the server.", ALL_CRITERIA.size());
+		}
+
 		try {
-			int savedAdvancements = loadSaveAdvancements(server, Configuration.ADVANCEMENTS_SAVE_PATH);
+			int savedAdvancements = loadSaveAdvancements(server);
 			if (savedAdvancements == 0) {
 				Main.LOGGER.info("No completed advancements data to load. Initialized new save file.");
 			} else {
@@ -76,17 +106,23 @@ public final class Advancements {
 		for (AdvancementEntry entry : advancements) {
 			Advancement advancement = entry.value();
 
-			// If the advancement has a display, add it to the list.
+			// If the advancement has a display, add it to the advancement map.
 			advancement.display().ifPresent(display -> {
 				ALL_ADVANCEMENTS.put(entry.id(), entry);
+
+				// Add all criteria for this advancement to the criteria map.
+				Map<String, AdvancementCriterion<?>> criteria = advancement.criteria();
+				criteria.forEach((key, criterion) -> {
+					ALL_CRITERIA.computeIfAbsent(entry.id(), id -> new ArrayList<>()).add(key);
+				});
 			});
 		}
 
 		return ALL_ADVANCEMENTS.size();
 	}
 
-	private static int loadSaveAdvancements(MinecraftServer server, Path saveFolder) throws IOException {
-		Path save = saveFolder.resolve(String.valueOf(server.getOverworld().getSeed()));
+	private static int loadSaveAdvancements(MinecraftServer server) throws IOException {
+		Path save = Configuration.ADVANCEMENTS_SAVE_PATH.resolve(String.valueOf(server.getOverworld().getSeed()));
 
 		if (!Files.exists(save)) {
 			try {
@@ -99,26 +135,19 @@ public final class Advancements {
 		}
 
 		BufferedReader reader = new BufferedReader(new FileReader(save.toString()));
-		String line = reader.readLine();
+		String entryName = reader.readLine();
 
-		while (line != null) {
-			String[] arr = line.split(",");
-			if (arr.length < 2) {
-				Main.LOGGER.warn("Skipping malformed line: '{}'", line.trim());
-				continue;
-			}
+		while (entryName != null) {
+			Identifier id = Identifier.of(entryName);
 
-			String entryName = arr[0];
-			String criterionName = arr[1];
-
-			AdvancementEntry entry = ALL_ADVANCEMENTS.get(Identifier.of(entryName));
+			AdvancementEntry entry = ALL_ADVANCEMENTS.get(id);
 			if (entry != null) {
-				COMPLETED_ADVANCEMENTS.put(criterionName, entry);
+				COMPLETED_ADVANCEMENTS.put(id, entry);
 			} else {
-				Main.LOGGER.warn("Advancement '{}' not found for criterion '{}'.", entryName, criterionName);
+				Main.LOGGER.error("Advancement '{}' not found.", entryName);
 			}
 
-			line = reader.readLine();
+			entryName = reader.readLine();
 		}
 
 		reader.close();
@@ -133,35 +162,46 @@ public final class Advancements {
 
 		PlayerAdvancementTracker tracker = player.getAdvancementTracker();
 
-		Main.LOGGER.info("Syncing {} advancements.", name);
-		COMPLETED_ADVANCEMENTS.forEach((criterionName, entry) -> tracker.grantCriterion(entry, criterionName));
+		Main.LOGGER.info("Syncing player '{}' advancements.", name);
+
+		// Loop through all completed advancements.
+		COMPLETED_ADVANCEMENTS.forEach((id, entry) -> {
+			// Loop through all criteria for this advancement.
+			ALL_CRITERIA.get(id).forEach(criterionName -> {
+				// Grant the criterion to the player.
+				tracker.grantCriterion(entry, criterionName);
+			});
+		});
 	}
 
-	public void OnCriterion(ServerPlayerEntity currentPlayer, AdvancementEntry entry, String criterionName, boolean isDone) {
-		if (COMPLETED_ADVANCEMENTS.containsKey(criterionName)) {
+	public void OnCriterion(ServerPlayerEntity currentPlayer, AdvancementEntry entry) {
+		Identifier id = entry.id();
+
+		if (COMPLETED_ADVANCEMENTS.containsKey(id)) {
 			return;
 		}
 
 		Advancement advancement = entry.value();
 		advancement.display().ifPresent(display -> {
-			if (isDone) {
-				String id = entry.id().toString();
+			PlayerAdvancementTracker tracker = currentPlayer.getAdvancementTracker();
+			if (tracker.getProgress(entry).isDone()) {
 				String playerName = currentPlayer.getName().getString();
 
-				COMPLETED_ADVANCEMENTS.put(criterionName, entry);
+				COMPLETED_ADVANCEMENTS.put(id, entry);
+
+				Collection<AdvancementCriterion<?>> criteria = advancement.criteria().values();
 
 				// Grant the advancement to all players.
 				List<ServerPlayerEntity> players = SERVER.getPlayerManager().getPlayerList();
 				for (ServerPlayerEntity player : players) {
 					if (currentPlayer != player) {
-						player.getAdvancementTracker().grantCriterion(entry, criterionName);
+						criteria.forEach(criterion -> player.getAdvancementTracker().grantCriterion(entry, criterion.toString()));
 					}
 				}
 
 				try {
-					String line = String.format("%s,%s%n", id, criterionName);
-					int n = appendToSave(line);
-					Main.LOGGER.info("Saved line '{}' ({} bytes written).", line, n);
+					String line = String.format("%s%n", id);
+					appendToSave(line);
 				} catch (IOException e) {
 					// This should be handled in another way, has to be recoverable, so we can try again.
 					throw new RuntimeException(e);
@@ -169,7 +209,7 @@ public final class Advancements {
 
 				Optional<Text> advancementName = advancement.name();
 				if (advancementName.isEmpty()) {
-					advancementName = Optional.of(Text.literal(criterionName));
+					advancementName = Optional.of(Text.literal(id.toString()));
 				}
 
 				// Send announcement to the server chat.
@@ -181,7 +221,7 @@ public final class Advancements {
 				// Send announcement to the Discord channel.
 				String title = display.getTitle().getString();
 				if (title.isEmpty()) {
-					title = criterionName;
+					title = id.toString();
 				}
 
 				String description = display.getDescription().getString();
@@ -191,14 +231,6 @@ public final class Advancements {
 		});
 	}
 
-	public void RegisterCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
-		dispatcher.register(CommandManager.literal("cooptweaks")
-				.then(CommandManager.literal("advancements")
-						.then(CommandManager.literal("progress").executes(this::progressCommand))
-				)
-		);
-	}
-
 	/**
 	 Gets the advancements progress of the server.
 
@@ -206,10 +238,5 @@ public final class Advancements {
 	 */
 	public static String getAdvancementsProgress() {
 		return String.format("%d/%d", COMPLETED_ADVANCEMENTS.size(), ALL_ADVANCEMENTS.size());
-	}
-
-	private int progressCommand(CommandContext<ServerCommandSource> context) {
-		context.getSource().sendFeedback(() -> Text.literal(String.format("%s advancements completed so far.", getAdvancementsProgress())), false);
-		return 1;
 	}
 }

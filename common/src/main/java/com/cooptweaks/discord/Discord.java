@@ -6,7 +6,9 @@ import com.cooptweaks.Main;
 import com.cooptweaks.discord.commands.Status;
 import com.cooptweaks.types.ConfigMap;
 import com.cooptweaks.types.Result;
+import com.cooptweaks.utils.TimeSince;
 import com.mojang.datafixers.util.Pair;
+import discord4j.common.retry.ReconnectOptions;
 import discord4j.common.store.Store;
 import discord4j.common.store.impl.LocalStoreLayout;
 import discord4j.common.util.Snowflake;
@@ -19,17 +21,14 @@ import discord4j.core.object.entity.Attachment;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
-import discord4j.core.object.entity.channel.Channel;
+import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.presence.ClientActivity;
 import discord4j.core.object.presence.ClientPresence;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandRequest;
-import discord4j.discordjson.json.EmbedData;
-import discord4j.discordjson.json.ImmutableEmbedData;
 import discord4j.gateway.intent.Intent;
 import discord4j.gateway.intent.IntentSet;
 import discord4j.rest.RestClient;
-import discord4j.rest.entity.RestChannel;
 import discord4j.rest.util.Color;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -43,6 +42,11 @@ import net.minecraft.util.math.BlockPos;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ Handles the Discord bot and its interactions with the server.
+ <p>
+ The bot is responsible for sending messages to the Discord channel and the server chat.
+ */
 public final class Discord {
 	/** Whether the bot has finished setting up all necessary components. */
 	private static final AtomicBoolean BOT_READY = new AtomicBoolean(false);
@@ -53,7 +57,10 @@ public final class Discord {
 	private static Snowflake BOT_USER_ID;
 	private static Snowflake CHANNEL_ID;
 
-	private static RestChannel CHANNEL;
+	private static MessageChannel CHANNEL;
+
+	private static long LAST_PRESENCE_UPDATE = 0;
+	private static boolean PRESENCE_CYCLE = true;
 
 	/** Slash commands. */
 	private static final HashMap<String, SlashCommand> COMMANDS = new HashMap<>(Map.of(
@@ -100,6 +107,7 @@ public final class Discord {
 				.setStore(Store.fromLayout(LocalStoreLayout.create()))
 				.setEnabledIntents(IntentSet.of(Intent.GUILD_MESSAGES, Intent.MESSAGE_CONTENT, Intent.GUILD_MEMBERS))
 				.setInitialPresence(presence -> ClientPresence.idle(ClientActivity.watching("the server start")))
+				.setReconnectOptions(ReconnectOptions.builder().setMaxRetries(5).setJitterFactor(0.5).build())
 				.login()
 				.doOnNext(gateway -> {
 					RestClient rest = gateway.getRestClient();
@@ -117,9 +125,7 @@ public final class Discord {
 					gateway.on(ChatInputInteractionEvent.class).subscribe(this::onInteraction);
 				})
 				.flatMap(gateway -> gateway.getChannelById(Snowflake.of(channelId))
-						.filter(Objects::nonNull)
-						.map(Channel::getRestChannel)
-						.filter(Objects::nonNull)
+						.ofType(MessageChannel.class)
 						.doOnNext(channel -> {
 							CHANNEL = channel;
 							CHANNEL_ID = channel.getId();
@@ -155,8 +161,6 @@ public final class Discord {
 		String cmd = event.getCommandName();
 
 		if (COMMANDS.containsKey(cmd)) {
-			Main.LOGGER.info("Executing command '{}'", cmd);
-
 			SlashCommand command = COMMANDS.get(cmd);
 			Result<EmbedCreateSpec> embed = command.execute(SERVER);
 
@@ -199,7 +203,7 @@ public final class Discord {
 		}
 
 		message.getAuthorAsMember()
-				.filter(Objects::nonNull)
+				.ofType(Member.class)
 				.flatMap(member -> member.getColor().map(color -> Pair.of(color, member)))
 				.doOnNext(pair -> {
 					Color color = pair.getFirst();
@@ -210,7 +214,7 @@ public final class Discord {
 					// The entire message that will be sent to the server.
 					MutableText text = Text.empty();
 
-					// Appending the GuildMember display name with the same color as the member's highest role.
+					// Appending the Member display name with the same color as their highest role.
 					text.append(Text.literal(member.getDisplayName()).styled(style -> style.withColor(color.getRGB())));
 					text.append(Text.literal(" >> " + content));
 
@@ -251,8 +255,8 @@ public final class Discord {
 			return;
 		}
 
-		ImmutableEmbedData embed = EmbedData.builder()
-				.color(color.getRGB())
+		EmbedCreateSpec embed = EmbedCreateSpec.builder()
+				.color(color)
 				.description(message)
 				.build();
 
@@ -261,11 +265,42 @@ public final class Discord {
 
 	public void NotifyStarted(MinecraftServer server) {
 		SERVER = server;
+		LAST_PRESENCE_UPDATE = System.currentTimeMillis();
 		QueueEvent(() -> SendEmbed("Server started!", Color.GREEN));
 	}
 
+	public void CyclePresence(List<ServerPlayerEntity> players) {
+		if (!BOT_READY.get()) {
+			return;
+		}
+
+		// Only update presence every 5 minutes.
+		if (System.currentTimeMillis() - LAST_PRESENCE_UPDATE < 5 * 60 * 1000) {
+			return;
+		}
+
+		LAST_PRESENCE_UPDATE = System.currentTimeMillis();
+
+		if (PRESENCE_CYCLE) {
+			String time = new TimeSince(Main.STARTUP).toString();
+			if (time.contains(" and ")) {
+				time = time.substring(0, time.indexOf(" and "));
+			}
+
+			GATEWAY.updatePresence(ClientPresence.online(ClientActivity.playing(String.format("for %s", time)))).subscribe();
+		} else {
+			if (players.isEmpty()) {
+				GATEWAY.updatePresence(ClientPresence.online(ClientActivity.playing("Minecraft"))).subscribe();
+			} else {
+				GATEWAY.updatePresence(ClientPresence.online(ClientActivity.watching(String.format("%d players", players.size())))).subscribe();
+			}
+		}
+
+		PRESENCE_CYCLE = !PRESENCE_CYCLE;
+	}
+
 	public void PlayerJoined(String name) {
-		// In the case on an integrated server, this event might not be called, so queue the event instead.
+		// In the case on an integrated server, this event might not be called, so queue it instead.
 		QueueEvent(() -> SendEmbed(String.format("**%s** joined!", name), Color.GREEN));
 	}
 
