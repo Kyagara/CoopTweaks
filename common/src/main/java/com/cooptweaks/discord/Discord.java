@@ -70,7 +70,7 @@ public final class Discord {
 	/** Queue of events to be processed after the bot is ready. */
 	private static final List<Runnable> QUEUE = new ArrayList<>(2);
 
-	public void QueueEvent(Runnable event) {
+	public void queueEvent(Runnable event) {
 		if (BOT_READY.get()) {
 			event.run();
 		} else {
@@ -78,7 +78,7 @@ public final class Discord {
 		}
 	}
 
-	private static void ProcessQueue() {
+	private static void processQueue() {
 		QUEUE.forEach(Runnable::run);
 		QUEUE.clear();
 	}
@@ -132,7 +132,7 @@ public final class Discord {
 							BOT_READY.set(true);
 
 							// Process queued events now that the bot is ready.
-							ProcessQueue();
+							processQueue();
 
 							Main.LOGGER.info("Discord bot online and ready.");
 						}))
@@ -141,7 +141,7 @@ public final class Discord {
 
 	public void Stop() {
 		if (BOT_READY.get()) {
-			SendEmbed("Server stopping.", Color.RED);
+			sendEmbed("Server stopping.", Color.RED);
 			Main.LOGGER.info("Logging out of Discord.");
 			GATEWAY.logout().block();
 		}
@@ -250,7 +250,7 @@ public final class Discord {
 				}).subscribe();
 	}
 
-	public void SendEmbed(String message, Color color) {
+	public void sendEmbed(String message, Color color) {
 		if (!BOT_READY.get()) {
 			return;
 		}
@@ -266,7 +266,7 @@ public final class Discord {
 	public void NotifyStarted(MinecraftServer server) {
 		SERVER = server;
 		LAST_PRESENCE_UPDATE = System.currentTimeMillis();
-		QueueEvent(() -> SendEmbed("Server started!", Color.GREEN));
+		queueEvent(() -> sendEmbed("Server started!", Color.GREEN));
 	}
 
 	public void CyclePresence(List<ServerPlayerEntity> players) {
@@ -301,11 +301,11 @@ public final class Discord {
 
 	public void PlayerJoined(String name) {
 		// In the case on an integrated server, this event might not be called, so queue it instead.
-		QueueEvent(() -> SendEmbed(String.format("**%s** joined!", name), Color.GREEN));
+		queueEvent(() -> sendEmbed(String.format("**%s** joined!", name), Color.GREEN));
 	}
 
 	public void PlayerLeft(ServerPlayerEntity player) {
-		SendEmbed(String.format("**%s** left!", player.getName().getString()), Color.BLACK);
+		sendEmbed(String.format("**%s** left!", player.getName().getString()), Color.BLACK);
 	}
 
 	public void PlayerSentChatMessage(ServerPlayerEntity player, Text message) {
@@ -322,7 +322,7 @@ public final class Discord {
 
 	public void PlayerChangedDimension(String name, String dimension) {
 		String message = String.format("**%s** entered **%s**.", name, dimension);
-		SendEmbed(message, Color.BLACK);
+		sendEmbed(message, Color.BLACK);
 	}
 
 	public void PlayerDied(String name, BlockPos pos, Text deathMessage) {
@@ -330,6 +330,6 @@ public final class Discord {
 		String text = deathMessage.getString().replace(name, String.format("**%s**", name));
 
 		String message = String.format("%s%n*`%s` at %d, %d, %d*", text, dimension, pos.getX(), pos.getY(), pos.getZ());
-		SendEmbed(message, Color.RED);
+		sendEmbed(message, Color.RED);
 	}
 }

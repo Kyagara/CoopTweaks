@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class Dimension {
+	private Dimension() {
+	}
+
 	/** Maps player names to their current dimension. */
 	private static final ConcurrentHashMap<String, String> PLAYER_CURRENT_DIMENSION_ID = new ConcurrentHashMap<>();
 

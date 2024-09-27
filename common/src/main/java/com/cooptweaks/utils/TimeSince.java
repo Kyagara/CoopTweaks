@@ -7,6 +7,9 @@ public class TimeSince {
 		this.past = past;
 	}
 
+	private static final String AND = " and ";
+	private static final String COMMA = ", ";
+
 	/**
 	 Returns a formatted string of time.
 
@@ -27,34 +30,37 @@ public class TimeSince {
 
 		StringBuilder time = new StringBuilder();
 
-		if (days > 0) {
-			time.append(days).append(" day").append(days > 1 ? "s" : "");
-		}
+		appendTimeUnit(time, formatTimeUnit(days, "day", "days"), true);
+		appendTimeUnit(time, formatTimeUnit(hours, "hour", "hours"), days > 0 && (minutes > 0 || seconds > 0));
+		appendTimeUnit(time, formatTimeUnit(minutes, "minute", "minutes"), (days > 0 || hours > 0) && seconds > 0);
+		appendTimeUnit(time, formatTimeUnit(seconds, "second", "seconds"), false);
 
-		if (hours > 0) {
-			if (!time.isEmpty()) {
-				time.append(days > 0 && (minutes > 0 || seconds > 0) ? ", " : " and ");
-			}
-
-			time.append(hours).append(" hour").append(hours > 1 ? "s" : "");
-		}
-
-		if (minutes > 0) {
-			if (!time.isEmpty()) {
-				time.append((days > 0 || hours > 0) && seconds > 0 ? ", " : " and ");
-			}
-
-			time.append(minutes).append(" minute").append(minutes > 1 ? "s" : "");
-		}
-
-		if (seconds > 0 || time.isEmpty()) {
-			if (!time.isEmpty()) {
-				time.append(" and ");
-			}
-
-			time.append(seconds).append(" second").append(seconds > 1 ? "s" : "");
+		// If no units were added, append 0 seconds
+		if (time.isEmpty()) {
+			time.append("0 seconds");
 		}
 
 		return time.toString();
+	}
+
+	/** Format a unit of time. Example: "2 days", "1 hour". */
+	private String formatTimeUnit(long value, String singular, String plural) {
+		if (value > 0) {
+			String unit = value > 1 ? plural : singular;
+			return value + " " + unit;
+		}
+
+		return "";
+	}
+
+	/** Add unit to the string with appropriate conjunctions. */
+	private void appendTimeUnit(StringBuilder time, String unit, boolean addComma) {
+		if (!unit.isEmpty()) {
+			if (!time.isEmpty()) {
+				time.append(addComma ? COMMA : AND);
+			}
+
+			time.append(unit);
+		}
 	}
 }

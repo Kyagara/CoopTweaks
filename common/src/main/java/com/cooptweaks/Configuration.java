@@ -8,6 +8,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 public final class Configuration {
+	private Configuration() {
+	}
+
 	/** Main config folder path. */
 	private static final Path MAIN_PATH = Platform.getConfigFolder().resolve("cooptweaks");
 
@@ -26,7 +29,7 @@ public final class Configuration {
 	 <li>discord.toml</li>
 	 </ul>
 	 */
-	public static void Verify() {
+	public static void verify() {
 		if (!Files.exists(MAIN_PATH)) {
 			try {
 				Main.LOGGER.info("Creating config folder.");
