@@ -1,8 +1,5 @@
-package com.cooptweaks.advancements;
+package com.cooptweaks;
 
-import com.cooptweaks.Configuration;
-import com.cooptweaks.Main;
-import com.cooptweaks.discord.Discord;
 import discord4j.rest.util.Color;
 import net.minecraft.advancement.*;
 import net.minecraft.server.MinecraftServer;

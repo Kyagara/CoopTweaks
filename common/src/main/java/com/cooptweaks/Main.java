@@ -1,9 +1,7 @@
 package com.cooptweaks;
 
-import com.cooptweaks.advancements.Advancements;
-import com.cooptweaks.advancements.commands.Progress;
+import com.cooptweaks.commands.advancements.Progress;
 import com.cooptweaks.commands.misc.Link;
-import com.cooptweaks.discord.Discord;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.*;
 import net.minecraft.util.math.BlockPos;
