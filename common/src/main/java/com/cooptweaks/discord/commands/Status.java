@@ -1,8 +1,10 @@
 package com.cooptweaks.discord.commands;
 
+import com.cooptweaks.Main;
 import com.cooptweaks.advancements.Advancements;
 import com.cooptweaks.discord.SlashCommand;
 import com.cooptweaks.types.Result;
+import com.cooptweaks.utils.TimeSince;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import discord4j.rest.util.Color;
@@ -38,14 +40,18 @@ public class Status implements SlashCommand {
 		String version = server.getVersion();
 		String players = String.format("%d/%d", server.getCurrentPlayerCount(), server.getMaxPlayerCount());
 		String advancements = Advancements.getAdvancementsProgress();
-
-		String message = String.format("`MOTD`: %s%n`Address`: %s%n`Version`: %s%n`Players`: %s%n`Advancements`: %s",
-				motd, address, version, players, advancements);
+		String uptime = new TimeSince(Main.STARTUP).toString();
 
 		return Result.success(EmbedCreateSpec.builder()
-				.color(Color.BLUE)
+				.color(Color.DEEP_LILAC)
 				.title("Server Status")
-				.description(message)
+				.description(motd)
+				.addField("Address", address, true)
+				.addField("Version", version, true)
+				.addField("", "", false)
+				.addField("Players", players, true)
+				.addField("Advancements", advancements, true)
+				.addField("Uptime", uptime, false)
 				.build());
 	}
 }

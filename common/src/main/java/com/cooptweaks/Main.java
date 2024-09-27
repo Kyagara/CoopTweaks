@@ -1,8 +1,9 @@
 package com.cooptweaks;
 
 import com.cooptweaks.advancements.Advancements;
+import com.cooptweaks.advancements.commands.Progress;
+import com.cooptweaks.commands.misc.Link;
 import com.cooptweaks.discord.Discord;
-import com.cooptweaks.events.GrantCriterionCallback;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.*;
 import net.minecraft.util.math.BlockPos;
@@ -16,18 +17,23 @@ public final class Main {
 	public static final Discord DISCORD = new Discord();
 	public static final Advancements ADVANCEMENTS = new Advancements();
 
+	public static long STARTUP;
+
 	public static void init() {
 		Configuration.Verify();
 
 		LifecycleEvent.SERVER_BEFORE_START.register(server -> DISCORD.Start());
 
 		LifecycleEvent.SERVER_STARTED.register(server -> {
+			STARTUP = System.currentTimeMillis();
 			DISCORD.NotifyStarted(server);
 
 			// Requires the server to be started since the seed won't be available until then.
 			// This might be changed if manually reading the level.dat, haven't seen any issue from doing it this way yet.
 			ADVANCEMENTS.LoadAdvancements(server);
 		});
+
+		LifecycleEvent.SERVER_LEVEL_SAVE.register(world -> DISCORD.CyclePresence(world.getPlayers()));
 
 		LifecycleEvent.SERVER_STOPPING.register(server -> DISCORD.Stop());
 
@@ -76,7 +82,14 @@ public final class Main {
 			return EventResult.pass();
 		});
 
-		GrantCriterionCallback.EVENT.register(ADVANCEMENTS::OnCriterion);
-		CommandRegistrationEvent.EVENT.register(ADVANCEMENTS::RegisterCommands);
+		PlayerEvent.PLAYER_ADVANCEMENT.register(ADVANCEMENTS::OnCriterion);
+
+		CommandRegistrationEvent.EVENT.register((dispatcher, registryAccess, environment) -> {
+			// Advancements
+			new Progress().register(dispatcher, registryAccess, environment);
+
+			// Misc
+			new Link().register(dispatcher, registryAccess, environment);
+		});
 	}
 }
