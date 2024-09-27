@@ -4,10 +4,7 @@ import com.cooptweaks.Configuration;
 import com.cooptweaks.Main;
 import com.cooptweaks.discord.Discord;
 import discord4j.rest.util.Color;
-import net.minecraft.advancement.Advancement;
-import net.minecraft.advancement.AdvancementCriterion;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.advancement.PlayerAdvancementTracker;
+import net.minecraft.advancement.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
@@ -27,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  Manages advancements and criteria syncing.
- <p>
  <p>
  Startup:
  <ol>
@@ -53,25 +49,30 @@ public final class Advancements {
 	/**
 	 Map of criteria for each advancement. Loaded at startup.
 	 <p>
-	 Maps the advancement {@link AdvancementEntry#id() identifier} to a list of criteria.
+	 Maps the advancement {@link AdvancementEntry#id() Identifier} to a list of its criteria.
 	 */
-	private static final HashMap<Identifier, List<String>> ALL_CRITERIA = new HashMap<>(122);
+	private static final HashMap<Identifier, List<String>> ALL_CRITERIA = HashMap.newHashMap(122);
 
 	/**
 	 Map of all completed advancements. Loaded from the save file.
 	 <p>
-	 Maps the advancement {@link AdvancementEntry#id() identifier} to the {@link AdvancementEntry}.
+	 Maps the advancement {@link AdvancementEntry#id() Identifier} to its {@link AdvancementEntry}.
 	 */
 	private static final ConcurrentHashMap<Identifier, AdvancementEntry> COMPLETED_ADVANCEMENTS = new ConcurrentHashMap<>(122);
 
 	private static FileChannel CURRENT_SEED_FILE;
 
-	private static synchronized void appendToSave(String text) throws IOException {
+	private static synchronized void appendToSave(String text) {
 		ByteBuffer buffer = ByteBuffer.wrap(text.getBytes());
-		CURRENT_SEED_FILE.write(buffer);
+		try {
+			CURRENT_SEED_FILE.write(buffer);
+		} catch (IOException e) {
+			// This should be handled in another way, has to be recoverable, so we can try again.
+			throw new RuntimeException(e);
+		}
 	}
 
-	public void LoadAdvancements(MinecraftServer server) {
+	public void loadAdvancements(MinecraftServer server) {
 		SERVER = server;
 
 		int totalAdvancements = loadServerAdvancements(server);
@@ -199,36 +200,36 @@ public final class Advancements {
 					}
 				}
 
-				try {
-					String line = String.format("%s%n", id);
-					appendToSave(line);
-				} catch (IOException e) {
-					// This should be handled in another way, has to be recoverable, so we can try again.
-					throw new RuntimeException(e);
-				}
+				String line = String.format("%s%n", id);
+				appendToSave(line);
 
 				Optional<Text> advancementName = advancement.name();
 				if (advancementName.isEmpty()) {
 					advancementName = Optional.of(Text.literal(id.toString()));
 				}
 
-				// Send announcement to the server chat.
-				MutableText text = Text.literal(playerName + " has made the advancement ")
-						.append(advancementName.get());
-
-				SERVER.getPlayerManager().broadcast(text, false);
-
-				// Send announcement to the Discord channel.
-				String title = display.getTitle().getString();
-				if (title.isEmpty()) {
-					title = id.toString();
-				}
-
-				String description = display.getDescription().getString();
-				String message = String.format("**%s** has made the advancement **%s**!%n*%s*", playerName, title, description);
-				DISCORD.SendEmbed(message, Color.GREEN);
+				sendAdvancementAnnouncement(playerName, id, advancementName.get(), display);
 			}
 		});
+	}
+
+	/** Sends an announcement to the server chat and Discord channel. */
+	private static void sendAdvancementAnnouncement(String playerName, Identifier advancementId, Text advancementName, AdvancementDisplay display) {
+		// Send announcement to the server chat.
+		MutableText text = Text.literal(playerName + " has made the advancement ")
+				.append(advancementName);
+
+		SERVER.getPlayerManager().broadcast(text, false);
+
+		// Send announcement to the Discord channel.
+		String title = display.getTitle().getString();
+		if (title.isEmpty()) {
+			title = advancementId.toString();
+		}
+
+		String description = display.getDescription().getString();
+		String message = String.format("**%s** has made the advancement **%s**!%n*%s*", playerName, title, description);
+		DISCORD.sendEmbed(message, Color.GREEN);
 	}
 
 	/**

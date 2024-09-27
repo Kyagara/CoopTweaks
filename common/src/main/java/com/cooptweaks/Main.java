@@ -20,7 +20,7 @@ public final class Main {
 	public static long STARTUP;
 
 	public static void init() {
-		Configuration.Verify();
+		Configuration.verify();
 
 		LifecycleEvent.SERVER_BEFORE_START.register(server -> DISCORD.Start());
 
@@ -30,7 +30,7 @@ public final class Main {
 
 			// Requires the server to be started since the seed won't be available until then.
 			// This might be changed if manually reading the level.dat, haven't seen any issue from doing it this way yet.
-			ADVANCEMENTS.LoadAdvancements(server);
+			ADVANCEMENTS.loadAdvancements(server);
 		});
 
 		LifecycleEvent.SERVER_LEVEL_SAVE.register(world -> DISCORD.CyclePresence(world.getPlayers()));
@@ -47,6 +47,8 @@ public final class Main {
 		});
 
 		PlayerEvent.PLAYER_QUIT.register(DISCORD::PlayerLeft);
+
+		PlayerEvent.PLAYER_ADVANCEMENT.register(ADVANCEMENTS::OnCriterion);
 
 		PlayerEvent.CHANGE_DIMENSION.register((player, oldWorld, newWorld) -> {
 			String name = player.getName().getString();
@@ -81,8 +83,6 @@ public final class Main {
 
 			return EventResult.pass();
 		});
-
-		PlayerEvent.PLAYER_ADVANCEMENT.register(ADVANCEMENTS::OnCriterion);
 
 		CommandRegistrationEvent.EVENT.register((dispatcher, registryAccess, environment) -> {
 			// Advancements
