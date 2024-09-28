@@ -1,6 +1,6 @@
 # CoopTweaks
 
-Sync advancements, chat relay for Discord and more.
+Sync advancements, chat relay for Discord and more. Check [here](https://github.com/Kyagara/CoopTweaks/actions) for the latest version.
 
 ## About
 
@@ -19,6 +19,7 @@ Focusing only on server side for now.
 
 ## TODO
 
+- Enable/disable modules, allow option to disable the relay but not the syncing.
 - Maybe use a small database library for storage as it might be useful for other ideas.
 - Build system needs some work, shadowing is probably not done right, add sources to the artifacts.
 - Prevent toast from showing for synced players, at the moment the player that was synced will get a toast notification after completing the already completed advancement.
