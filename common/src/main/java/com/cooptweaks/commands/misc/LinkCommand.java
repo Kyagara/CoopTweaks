@@ -1,6 +1,7 @@
 package com.cooptweaks.commands.misc;
 
 import com.cooptweaks.commands.ServerCommand;
+import com.cooptweaks.keybinds.misc.Link;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.command.CommandRegistryAccess;
@@ -8,10 +9,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
-public class Link implements ServerCommand {
+public class LinkCommand implements ServerCommand {
 	@Override
 	public void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
 		dispatcher
@@ -34,10 +34,7 @@ public class Link implements ServerCommand {
 			return 1;
 		}
 
-		MutableText text = Text.empty();
-		text.append(player.getDisplayName());
-		text.append(Text.literal(" linked "));
-		text.append(item.toHoverableText());
+		Text text = Link.getHoverableText(item.toHoverableText(), player.getDisplayName());
 
 		source.getServer().getPlayerManager().broadcast(text, false);
 		return 0;
