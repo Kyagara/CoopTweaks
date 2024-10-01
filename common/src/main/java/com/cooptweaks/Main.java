@@ -36,7 +36,10 @@ public final class Main {
 
 		LifecycleEvent.SERVER_LEVEL_SAVE.register(world -> DISCORD.CyclePresence(world.getPlayers()));
 
-		LifecycleEvent.SERVER_STOPPING.register(server -> DISCORD.Stop());
+		LifecycleEvent.SERVER_STOPPING.register(server -> {
+			DISCORD.Stop();
+			ADVANCEMENTS.unload();
+		});
 
 		PlayerEvent.PLAYER_JOIN.register(player -> {
 			String name = player.getName().getString();

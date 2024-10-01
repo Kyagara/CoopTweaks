@@ -153,6 +153,21 @@ public final class Advancements {
 		return COMPLETED_ADVANCEMENTS.size();
 	}
 
+	/** Unloads the advancements and closes the save file. */
+	public void unload() {
+		if (CURRENT_SEED_FILE.isOpen()) {
+			try {
+				CURRENT_SEED_FILE.close();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		COMPLETED_ADVANCEMENTS.clear();
+		ALL_ADVANCEMENTS.clear();
+		ALL_CRITERIA.clear();
+	}
+
 	public void SyncPlayerOnJoin(ServerPlayerEntity player, String name) {
 		if (COMPLETED_ADVANCEMENTS.isEmpty()) {
 			return;
