@@ -1,9 +1,12 @@
 package com.cooptweaks;
 
 import com.cooptweaks.commands.advancements.Progress;
-import com.cooptweaks.commands.misc.Link;
+import com.cooptweaks.commands.misc.LinkCommand;
+import com.cooptweaks.keybinds.misc.Link;
+import com.cooptweaks.packets.LinkPacket;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.*;
+import dev.architectury.networking.NetworkManager;
 import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +90,9 @@ public final class Main {
 			new Progress().register(dispatcher, registryAccess, environment);
 
 			// Misc
-			new Link().register(dispatcher, registryAccess, environment);
+			new LinkCommand().register(dispatcher, registryAccess, environment);
 		});
+
+		NetworkManager.registerReceiver(NetworkManager.Side.C2S, LinkPacket.PAYLOAD_ID, LinkPacket.CODEC, Link::handlePacket);
 	}
 }
