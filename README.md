@@ -15,14 +15,13 @@ Focusing only on server side for now.
 - Send events like advancements, join/leave, death, from the server to Discord.
 - Sync advancements completion, all players share the same advancement progress.
 - Discord commands to retrieve information about the server.
-- Link items in the chat, via command or using `Left Shift + Alt` hovering over an item.
+- Link items in the chat, via command or using `Left Shift + Left Alt` hovering over an item.
 
 ## TODO
 
 - Enable/disable modules, allow option to disable the relay but not the syncing.
 - Maybe use a small database library for storage as it might be useful for other ideas.
 - Build system needs some work, shadowing is probably not done right, add sources to the artifacts.
-- Prevent toast from showing for synced players, at the moment the player that was synced will get a toast notification after completing the already completed advancement.
 - Add Discord commands to retrieve general information about the server, TPS, etc.
 
 ## Configuration
@@ -47,3 +46,7 @@ Links the item being held by the player to the chat.
 ## Slash Commands (Discord)
 
 - `/status`: Shows information about the server like motd, uptime, address, etc.
+
+## Keybinds
+
+- `Left Shift + Left Alt`: Links the item being hovered by the player.
