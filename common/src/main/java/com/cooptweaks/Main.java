@@ -11,8 +11,6 @@ import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 public final class Main {
 	public static final String MOD_ID = "cooptweaks";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
@@ -28,18 +26,10 @@ public final class Main {
 		// Start the Discord bot when the server is starting.
 		LifecycleEvent.SERVER_BEFORE_START.register(server -> DISCORD.Start());
 
-		LifecycleEvent.SERVER_LEVEL_LOAD.register(world -> {
-			try {
-				ADVANCEMENTS.loadSavedAdvancements(world);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
-
 		LifecycleEvent.SERVER_STARTED.register(server -> {
 			STARTUP = System.currentTimeMillis();
 
-			ADVANCEMENTS.loadServerAdvancements(server);
+			ADVANCEMENTS.loadAdvancements(server);
 			DISCORD.NotifyStarted(server);
 		});
 

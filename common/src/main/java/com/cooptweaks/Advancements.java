@@ -4,7 +4,6 @@ import discord4j.rest.util.Color;
 import net.minecraft.advancement.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -70,10 +69,30 @@ public final class Advancements {
 		}
 	}
 
-	/** Loads all advancements from the server. */
-	public void loadServerAdvancements(MinecraftServer server) {
+	public void loadAdvancements(MinecraftServer server) {
 		SERVER = server;
 
+		int totalAdvancements = loadServerAdvancements(server);
+		if (totalAdvancements == 0) {
+			Main.LOGGER.error("No advancements loaded from the server.");
+			return;
+		} else {
+			Main.LOGGER.info("Loaded {} advancements from the server.", totalAdvancements);
+		}
+
+		try {
+			int savedAdvancements = loadCompletedAdvancements(server.getOverworld().getSeed());
+			if (savedAdvancements == 0) {
+				Main.LOGGER.info("No completed advancements data to load. Initialized new save file.");
+			} else {
+				Main.LOGGER.info("{} completed advancements loaded from the save file.", savedAdvancements);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private static int loadServerAdvancements(MinecraftServer server) {
 		Collection<AdvancementEntry> advancements = server.getAdvancementLoader().getAdvancements();
 
 		for (AdvancementEntry entry : advancements) {
@@ -91,29 +110,15 @@ public final class Advancements {
 			});
 		}
 
-		if (ALL_CRITERIA.isEmpty()) {
-			Main.LOGGER.error("No criteria loaded from the server.");
-		} else {
-			Main.LOGGER.info("Loaded {} criteria from the server.", ALL_CRITERIA.size());
-		}
-
-		int totalAdvancements = ALL_ADVANCEMENTS.size();
-
-		if (totalAdvancements == 0) {
-			Main.LOGGER.error("No advancements loaded from the server.");
-		} else {
-			Main.LOGGER.info("Loaded {} advancements from the server.", totalAdvancements);
-		}
+		return ALL_ADVANCEMENTS.size();
 	}
 
-	/** Loads the completed advancements for the world from its save file. */
-	public void loadSavedAdvancements(ServerWorld server) throws IOException {
-		Path save = Configuration.ADVANCEMENTS_SAVE_PATH.resolve(String.valueOf(server.getSeed()));
+	private static int loadCompletedAdvancements(long seed) throws IOException {
+		Path save = Configuration.ADVANCEMENTS_SAVE_PATH.resolve(String.valueOf(seed));
 
 		if (!Files.exists(save)) {
 			CURRENT_SEED_FILE = FileChannel.open(save, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-			Main.LOGGER.info("No completed advancements data to load. Initialized new save file.");
-			return;
+			return 0;
 		}
 
 		BufferedReader reader = new BufferedReader(new FileReader(save.toString()));
@@ -134,7 +139,7 @@ public final class Advancements {
 
 		reader.close();
 		CURRENT_SEED_FILE = FileChannel.open(save, StandardOpenOption.APPEND);
-		Main.LOGGER.info("Loaded {} completed advancements from the save file.", COMPLETED_ADVANCEMENTS.size());
+		return COMPLETED_ADVANCEMENTS.size();
 	}
 
 	/** Unloads the advancements and closes the save file. */
