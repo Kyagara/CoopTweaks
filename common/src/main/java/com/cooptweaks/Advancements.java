@@ -4,6 +4,7 @@ import discord4j.rest.util.Color;
 import net.minecraft.advancement.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -69,36 +70,10 @@ public final class Advancements {
 		}
 	}
 
-	public void loadAdvancements(MinecraftServer server) {
+	/** Loads all advancements from the server. */
+	public void loadServerAdvancements(MinecraftServer server) {
 		SERVER = server;
 
-		int totalAdvancements = loadServerAdvancements(server);
-		if (totalAdvancements == 0) {
-			Main.LOGGER.error("No advancements loaded from the server.");
-			return;
-		} else {
-			Main.LOGGER.info("Loaded {} advancements from the server.", totalAdvancements);
-		}
-
-		if (ALL_CRITERIA.isEmpty()) {
-			Main.LOGGER.error("No criteria loaded from the server.");
-		} else {
-			Main.LOGGER.info("Loaded {} criteria from the server.", ALL_CRITERIA.size());
-		}
-
-		try {
-			int savedAdvancements = loadSaveAdvancements(server);
-			if (savedAdvancements == 0) {
-				Main.LOGGER.info("No completed advancements data to load. Initialized new save file.");
-			} else {
-				Main.LOGGER.info("{} completed advancements loaded from the save file.", savedAdvancements);
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private static int loadServerAdvancements(MinecraftServer server) {
 		Collection<AdvancementEntry> advancements = server.getAdvancementLoader().getAdvancements();
 
 		for (AdvancementEntry entry : advancements) {
@@ -116,20 +91,29 @@ public final class Advancements {
 			});
 		}
 
-		return ALL_ADVANCEMENTS.size();
+		if (ALL_CRITERIA.isEmpty()) {
+			Main.LOGGER.error("No criteria loaded from the server.");
+		} else {
+			Main.LOGGER.info("Loaded {} criteria from the server.", ALL_CRITERIA.size());
+		}
+
+		int totalAdvancements = ALL_ADVANCEMENTS.size();
+
+		if (totalAdvancements == 0) {
+			Main.LOGGER.error("No advancements loaded from the server.");
+		} else {
+			Main.LOGGER.info("Loaded {} advancements from the server.", totalAdvancements);
+		}
 	}
 
-	private static int loadSaveAdvancements(MinecraftServer server) throws IOException {
-		Path save = Configuration.ADVANCEMENTS_SAVE_PATH.resolve(String.valueOf(server.getOverworld().getSeed()));
+	/** Loads the completed advancements for the world from its save file. */
+	public void loadSavedAdvancements(ServerWorld server) throws IOException {
+		Path save = Configuration.ADVANCEMENTS_SAVE_PATH.resolve(String.valueOf(server.getSeed()));
 
 		if (!Files.exists(save)) {
-			try {
-				CURRENT_SEED_FILE = FileChannel.open(save, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-
-			return 0;
+			CURRENT_SEED_FILE = FileChannel.open(save, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+			Main.LOGGER.info("No completed advancements data to load. Initialized new save file.");
+			return;
 		}
 
 		BufferedReader reader = new BufferedReader(new FileReader(save.toString()));
@@ -150,7 +134,7 @@ public final class Advancements {
 
 		reader.close();
 		CURRENT_SEED_FILE = FileChannel.open(save, StandardOpenOption.APPEND);
-		return COMPLETED_ADVANCEMENTS.size();
+		Main.LOGGER.info("Loaded {} completed advancements from the save file.", COMPLETED_ADVANCEMENTS.size());
 	}
 
 	/** Unloads the advancements and closes the save file. */
@@ -169,7 +153,7 @@ public final class Advancements {
 	}
 
 	public void SyncPlayerOnJoin(ServerPlayerEntity player, String name) {
-		if (COMPLETED_ADVANCEMENTS.isEmpty()) {
+		if (COMPLETED_ADVANCEMENTS.isEmpty() || ALL_ADVANCEMENTS.isEmpty()) {
 			return;
 		}
 
@@ -188,6 +172,10 @@ public final class Advancements {
 	}
 
 	public void OnCriterion(ServerPlayerEntity currentPlayer, AdvancementEntry entry) {
+		if (ALL_ADVANCEMENTS.isEmpty()) {
+			return;
+		}
+
 		Identifier id = entry.id();
 
 		if (COMPLETED_ADVANCEMENTS.containsKey(id)) {
