@@ -15,8 +15,9 @@ public class LinkCommand implements ServerCommand {
 	@Override
 	public void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
 		dispatcher
-				.register(CommandManager.literal("link")
-						.executes(this::execute));
+				.register(CommandManager.literal("cooptweaks")
+						.then(CommandManager.literal("link")
+								.executes(this::execute)));
 	}
 
 	@Override
