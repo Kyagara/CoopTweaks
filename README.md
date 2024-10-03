@@ -7,8 +7,6 @@ Sync advancements, chat relay for Discord and more. Check [here](https://github.
 This project is inspired by the [CooperativeAdvancements](https://modrinth.com/mod/cooperative-advancements) mod, my
 goal with this is to add on the coop experience I really enjoyed from CooperativeAdvancements by giving more features in just one package.
 
-Focusing only on server side for now.
-
 ## Features
 
 - Bridges a Discord channel to the Minecraft server chat, allowing for chat between the two.
@@ -34,20 +32,22 @@ Configuration is located in a folder called `cooptweaks`, it contains the follow
 
 The Discord bot requires the permission to create slash commands and `MESSAGE_CONTENT` and `GUILD_MEMBERS` intents.
 
+## Keybinds
+
+- `Left Shift + Left Alt`: Links the item being hovered by the player.
+
 ## Server Commands
 
-### `/cooptweaks advancements <subcommand>`
+All commands are prefixed with `/cooptweaks`.
+
+### `advancements <subcommand>`
 
 - `progress`: Shows the advancement progress of the world.
 
-### `/link`
+### `link`
 
-Links the item being held by the player to the chat.
+Links the item being held by the player in the chat.
 
 ## Slash Commands (Discord)
 
 - `/status`: Shows information about the server like motd, uptime, address, etc.
-
-## Keybinds
-
-- `Left Shift + Left Alt`: Links the item being hovered by the player.
