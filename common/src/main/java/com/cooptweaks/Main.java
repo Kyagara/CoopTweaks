@@ -11,6 +11,8 @@ import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+
 public final class Main {
 	public static final String MOD_ID = "cooptweaks";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
@@ -23,15 +25,22 @@ public final class Main {
 	public static void init() {
 		Configuration.verify();
 
+		// Start the Discord bot when the server is starting.
 		LifecycleEvent.SERVER_BEFORE_START.register(server -> DISCORD.Start());
+
+		LifecycleEvent.SERVER_LEVEL_LOAD.register(world -> {
+			try {
+				ADVANCEMENTS.loadSavedAdvancements(world);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
 
 		LifecycleEvent.SERVER_STARTED.register(server -> {
 			STARTUP = System.currentTimeMillis();
-			DISCORD.NotifyStarted(server);
 
-			// Requires the server to be started since the seed won't be available until then.
-			// This might be changed if manually reading the level.dat, haven't seen any issue from doing it this way yet.
-			ADVANCEMENTS.loadAdvancements(server);
+			ADVANCEMENTS.loadServerAdvancements(server);
+			DISCORD.NotifyStarted(server);
 		});
 
 		LifecycleEvent.SERVER_LEVEL_SAVE.register(world -> DISCORD.CyclePresence(world.getPlayers()));
@@ -69,7 +78,6 @@ public final class Main {
 			Dimension.updatePlayerCurrentDimension(name, dimensionId);
 		});
 
-		// Maybe use DECORATE event instead?
 		ChatEvent.RECEIVED.register((player, message) -> {
 			DISCORD.PlayerSentChatMessage(player, message);
 			return EventResult.pass();
@@ -96,6 +104,7 @@ public final class Main {
 			new LinkCommand().register(dispatcher, registryAccess, environment);
 		});
 
+		// Handle the Link packet sent from a client.
 		NetworkManager.registerReceiver(NetworkManager.Side.C2S, LinkPacket.PAYLOAD_ID, LinkPacket.CODEC, Link::handlePacket);
 	}
 }
