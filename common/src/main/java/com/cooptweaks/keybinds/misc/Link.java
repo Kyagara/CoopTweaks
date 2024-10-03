@@ -50,9 +50,11 @@ public class Link {
 		text.append(playerName);
 		text.append(Text.literal(" linked "));
 
+		Formatting color = stack.getRarity().getFormatting();
+
 		MutableText item = stack.getName().copy()
-				.styled(style -> style.withColor(Formatting.AQUA)
-						.withUnderline(true)
+				.styled(style -> style.withColor(color)
+						.withItalic(true)
 						.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemStackContent(stack))));
 
 		text.append(item);
