@@ -8,8 +8,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 
 public class Link {
 	public static void sendPacket(MinecraftClient client) {
@@ -38,15 +40,22 @@ public class Link {
 
 			ItemStack stack = link.value();
 
-			server.getPlayerManager().broadcast(getHoverableText(stack.toHoverableText(), player.getDisplayName()), false);
+			server.getPlayerManager().broadcast(getHoverableText(stack, player.getDisplayName()), false);
 		});
 	}
 
-	public static Text getHoverableText(Text stack, Text player) {
+	/** Creates a {@link Text} to be sent to the server chat. */
+	public static Text getHoverableText(ItemStack stack, Text playerName) {
 		MutableText text = Text.empty();
-		text.append(player);
+		text.append(playerName);
 		text.append(Text.literal(" linked "));
-		text.append(stack);
+
+		MutableText item = stack.getName().copy()
+				.styled(style -> style.withColor(Formatting.AQUA)
+						.withUnderline(true)
+						.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemStackContent(stack))));
+
+		text.append(item);
 		return text;
 	}
 }
