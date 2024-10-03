@@ -34,7 +34,7 @@ public class LinkCommand implements ServerCommand {
 			return 1;
 		}
 
-		Text text = Link.getHoverableText(item.toHoverableText(), player.getDisplayName());
+		Text text = Link.getHoverableText(item, player.getDisplayName());
 
 		source.getServer().getPlayerManager().broadcast(text, false);
 		return 0;
