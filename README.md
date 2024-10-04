@@ -27,7 +27,7 @@ goal with this is to add on the coop experience I really enjoyed from Cooperativ
 Configuration is located in a folder called `cooptweaks`, it contains the following:
 
 - `saves`: Folder containing the advancements reached by the players, files are named by the world seed.
-- `discord.toml`: Configure or enable/disable the Discord bridge.
+- `discord.toml`: Configuration for Discord related features.
 
 The Discord bot requires the permission to create slash commands and `MESSAGE_CONTENT` and `GUILD_MEMBERS` intents.
 
