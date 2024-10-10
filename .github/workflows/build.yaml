@@ -43,4 +43,4 @@ jobs:
         with:
           name: Artifacts
           path: |
-            ./build/*.jar
+            ./build/*/*.jar
