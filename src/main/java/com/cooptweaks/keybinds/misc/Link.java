@@ -54,10 +54,10 @@ public class Link {
 		Rarity rarity = stack.getRarity();
 
 		Formatting color = switch (rarity) {
-			case COMMON -> Formatting.DARK_GRAY;
-			case RARE -> Formatting.GOLD;
-			case EPIC -> Formatting.YELLOW;
-			default -> Formatting.GRAY;
+			case UNCOMMON -> Formatting.YELLOW;
+			case RARE -> Formatting.AQUA;
+			case EPIC -> Formatting.LIGHT_PURPLE;
+			default -> Formatting.WHITE;
 		};
 
 		MutableText item = stack.getName().copy()
