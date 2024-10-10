@@ -42,6 +42,7 @@ jobs:
         run: |
           VERSIONS=("1.21.1")
           for version in "${VERSIONS[@]}"; do
+            mkdir ./build/"$version"/
             mv ./versions/*/build/libs/*fabric.jar ./build/"$version"/
             mv ./versions/*/build/libs/*neoforge.jar ./build/"$version"/
           done
