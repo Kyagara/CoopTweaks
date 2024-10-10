@@ -38,18 +38,9 @@ jobs:
       - name: Build
         run: ./gradlew chiseledBuildAndCollect
 
-      - name: Move jars
-        run: |
-          VERSIONS=("1.21.1")
-          for version in "${VERSIONS[@]}"; do
-            mkdir ./build/"$version"/
-            mv ./versions/*/build/libs/*fabric.jar ./build/"$version"/
-            mv ./versions/*/build/libs/*neoforge.jar ./build/"$version"/
-          done
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Artifacts
           path: |
-            ./build
+            ./build/*.jar
