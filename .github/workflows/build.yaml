@@ -12,9 +12,6 @@ on:
       - "*.gradle"
       - "gradle.properties"
 
-env:
-  VERSIONS: ("1.21.1")
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -43,8 +40,10 @@ jobs:
 
       - name: Move jars
         run: |
-          for version in ${{ env.VERSIONS }}; do
-            mv ./versions/*/build/libs/*fabric.jar ./versions/*/build/libs/*neoforge.jar ./build/$version/
+          VERSIONS=("1.21.1")
+          for version in "${VERSIONS[@]}"; do
+            mv ./versions/*/build/libs/*fabric.jar ./build/"$version"/
+            mv ./versions/*/build/libs/*neoforge.jar ./build/"$version"/
           done
 
       - name: Upload artifacts
