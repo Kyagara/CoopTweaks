@@ -36,10 +36,12 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build
-        run: ./gradlew build
+        run: ./gradlew chiseledBuildAndCollect
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Artifacts
-          path: build/
+          path: |
+            ./versions/**/build/libs/*fabric.jar
+            ./versions/**/build/libs/*neoforge.jar

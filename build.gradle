@@ -1,73 +1,115 @@
 plugins {
-    id "dev.architectury.loom" version "1.7-SNAPSHOT" apply false
-    id "architectury-plugin" version "3.4-SNAPSHOT"
-    id "com.gradleup.shadow" version "8.3.2" apply false
-
-    id "io.github.pacifistmc.forgix" version "1.2.9"
+    id "dev.architectury.loom" version "1.7-SNAPSHOT"
+    id "com.gradleup.shadow" version "8.3.2"
 }
 
-architectury {
-    minecraft = project.minecraft_version
+def loader = property("loom.platform")
+def isFabric = loader == "fabric"
+
+def minecraft_version = property("deps.minecraft")
+def mod_version = property("mod.version")
+
+base {
+    archivesName = property("mod.name") + "-" + mod_version + "-" + minecraft_version + "+" + loader
 }
 
-allprojects {
-    group = project.maven_group
-    version = project.mod_version
+repositories {
+    maven { url "https://maven.neoforged.net/releases" }
 }
 
-forgix {
-    group = project.maven_group
-    mergedJarName = "cooptweaks-${project.mod_version}-fabric-neoforge.jar"
-    outputDir = "build"
-
-    if (findProject(":neoforge")) {
-        neoforge {
-            jarLocation = "build/libs/cooptweaks-neoforge-${project.mod_version}.jar"
+loom {
+    decompilers {
+        vineflower { // Adds names to lambdas - useful for mixins
+            options.put("mark-corresponding-synthetics", "1")
         }
     }
 
-    if (findProject(":fabric")) {
-        fabric {
-            jarLocation = "build/libs/cooptweaks-fabric-${project.mod_version}.jar"
-        }
+    runConfigs.all {
+        ideConfigGenerated true
+        vmArgs "-Dmixin.debug.export=true"
+        runDir = "../../run"
     }
 }
 
-subprojects {
-    apply plugin: "dev.architectury.loom"
-    apply plugin: "architectury-plugin"
+configurations {
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
 
-    base {
-        archivesName = "$project.archives_name-$project.name"
+dependencies {
+    minecraft "net.minecraft:minecraft:${minecraft_version}"
+
+    mappings loom.layered {
+        it.mappings "net.fabricmc:yarn:${property("deps.yarn")}:v2"
+        it.mappings "dev.architectury:yarn-mappings-patch-neoforge:${property("deps.yarn_mappings_neoforge_patch")}"
     }
 
-    repositories {
-        // Add repositories to retrieve artifacts from in here.
-        // You should only use this when depending on other mods because
-        // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-        // See https://docs.gradle.org/current/userguide/declaring_repositories.html
-        // for more information about repositories.
+    if (isFabric) {
+        modImplementation "net.fabricmc:fabric-loader:${property("deps.fabric_loader")}"
+        modImplementation "net.fabricmc.fabric-api:fabric-api:${property("deps.fabric_api")}"
+    } else {
+        neoForge "net.neoforged:neoforge:${property("deps.neoforge")}"
     }
 
-    dependencies {
-        minecraft "net.minecraft:minecraft:$project.minecraft_version"
-        mappings loom.layered {
-            it.mappings("net.fabricmc:yarn:$project.yarn_mappings:v2")
-            it.mappings("dev.architectury:yarn-mappings-patch-neoforge:$project.yarn_mappings_patch_neoforge_version")
-        }
+    modImplementation "dev.architectury:architectury-${loader}:${property("deps.architectury_api")}"
+
+    shadowBundle implementation("com.discord4j:discord4j-core:${property("deps.discord4j")}")
+}
+
+tasks.processResources {
+    def props = [
+            version  : mod_version,
+            minecraft: minecraft_version,
+    ]
+
+    filesMatching("fabric.mod.json") { expand(props) }
+    filesMatching("META-INF/neoforge.mods.toml") { expand(props) }
+    filesMatching("cooptweaks.mixins.json") { expand(props) }
+}
+
+tasks.register('buildAndCollect', Copy) {
+    group = 'build'
+    from(tasks.remapJar.archiveFile)
+    into(rootProject.layout.buildDirectory.file("libs/"))
+    dependsOn('build')
+}
+
+shadowJar {
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = "dev-shadow"
+
+    relocate 'io.netty', 'shadow.io.netty'
+    relocate 'org.checkerframework', 'shadow.org.checkerframework'
+    relocate 'com.google', 'shadow.com.google'
+}
+
+remapJar {
+    dependsOn(shadowJar)
+    inputFile = tasks.shadowJar.archiveFile
+}
+
+afterEvaluate {
+    stonecutter {
+        stonecutter.const("fabric", loader == "fabric")
+        stonecutter.const("neoforge", loader == "neoforge")
     }
+}
 
-    java {
-        withSourcesJar()
-
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+if (stonecutter.current.isActive) {
+    rootProject.tasks.register("buildActive") {
+        group = "project"
+        dependsOn(tasks.named("build"))
     }
+}
 
-    tasks.withType(JavaCompile).configureEach {
-        it.options.release = 21
-    }
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
 
-    build.finalizedBy(mergeJars)
-    assemble.finalizedBy(mergeJars)
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
 }

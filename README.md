@@ -19,7 +19,7 @@ goal with this is to add on the coop experience I really enjoyed from Cooperativ
 
 - Enable/disable modules, allow option to disable the relay but not the syncing.
 - Maybe use a small database library for storage as it might be useful for other ideas.
-- Build system needs some work, shadowing is probably not done right, add sources to the artifacts.
+- Maybe add back the merged jars, add sources to the artifacts.
 - Add Discord commands to retrieve general information about the server, TPS, etc.
 
 ## Configuration
