@@ -72,7 +72,7 @@ tasks.processResources {
 tasks.register('buildAndCollect', Copy) {
     group = 'build'
     from(tasks.remapJar.archiveFile)
-    into(rootProject.layout.buildDirectory.file("libs/"))
+    into(rootProject.layout.buildDirectory.file("${minecraft_version}/"))
     dependsOn('build')
 }
 
