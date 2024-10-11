@@ -10,7 +10,7 @@ def minecraft_version = property("deps.minecraft")
 def mod_version = property("mod.version")
 
 base {
-    archivesName = property("mod.name") + "-" + mod_version + "-" + minecraft_version + "+" + loader
+    archivesName = "${property("mod.name")}-${mod_version}-${minecraft_version}+${loader}"
 }
 
 repositories {
@@ -60,8 +60,8 @@ dependencies {
 
 tasks.processResources {
     def props = [
-            version  : mod_version,
-            minecraft: minecraft_version,
+            version    : mod_version,
+            minecraft  : minecraft_version,
     ]
 
     filesMatching("fabric.mod.json") { expand(props) }
