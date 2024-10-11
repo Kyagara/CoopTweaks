@@ -5,15 +5,11 @@ import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientScreenInputEvent;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
+import dev.architectury.utils.Env;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-
-//? if fabric
-import net.fabricmc.api.EnvType;
-//? if neoforge
-/*import net.neoforged.api.distmarker.Dist;*/
 
 public class Client {
 	public static final KeyBinding LINK_ITEM_KEY = new KeyBinding(
@@ -24,10 +20,7 @@ public class Client {
 	);
 
 	public static void init() {
-		//? if fabric
-		if (Platform.getEnv() != EnvType.CLIENT) {
-		//? if neoforge
-		/*if (Platform.getEnv() != Dist.CLIENT) {*/
+		if (Platform.getEnvironment() == Env.SERVER) {
 			return;
 		}
 
