@@ -13,17 +13,20 @@ Sync advancements, chat relay for Discord and more.
 '''
 #logoFile = ""
 
+[[mixins]]
+config = "cooptweaks.mixins.json"
+
 [[dependencies.cooptweaks]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.1.6,)"
+versionRange = "[21.1.61,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.cooptweaks]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.1,)"
+versionRange = "${minecraft}"
 ordering = "NONE"
 side = "BOTH"
 
@@ -33,6 +36,3 @@ type = "required"
 versionRange = "[13.0.6,)"
 ordering = "AFTER"
 side = "BOTH"
-
-[[mixins]]
-config = "cooptweaks.mixins.json"

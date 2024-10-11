@@ -8,6 +8,7 @@
     "Kyagara"
   ],
   "contact": {
+    "homepage": "https://modrinth.com/mod/cooptweaks",
     "sources": "https://github.com/Kyagara/CoopTweaks"
   },
   "license": "Apache-2.0",
@@ -25,7 +26,7 @@
   ],
   "depends": {
     "fabricloader": ">=0.16.5",
-    "minecraft": "~1.21.1",
+    "minecraft": "${minecraft}",
     "java": ">=21",
     "architectury": ">=13.0.6",
     "fabric-api": "*"
