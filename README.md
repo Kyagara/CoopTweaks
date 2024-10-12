@@ -7,6 +7,8 @@ Sync advancements, chat relay for Discord and more. Check [here](https://github.
 This project is inspired by the [CooperativeAdvancements](https://modrinth.com/mod/cooperative-advancements) mod, my
 goal with this is to add on the coop experience I really enjoyed from CooperativeAdvancements by giving more features in just one package.
 
+Some features in this mod come from my other mod, [Fred](https://github.com/Kyagara/fred).
+
 ## Features
 
 - Bridges a Discord channel to the Minecraft server chat, allowing for chat between the two.
