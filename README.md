@@ -34,6 +34,13 @@ The Discord bot requires the permission to create slash commands and `MESSAGE_CO
 
 - `Left Shift + Left Alt`: Links the item being hovered by the player.
 
+## Client Commands
+
+- `shrug`: Shrugs.
+- `flip`: Flips the table.
+- `unflip`: Unflips said table.
+- `coords`: Shows the player's coordinates in a dimension.
+
 ## Server Commands
 
 All commands are prefixed with `/cooptweaks`.

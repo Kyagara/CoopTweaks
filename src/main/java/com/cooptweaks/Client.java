@@ -1,7 +1,12 @@
 package com.cooptweaks;
 
+import com.cooptweaks.commands.misc.Coordinates;
+import com.cooptweaks.commands.misc.FlipTable;
+import com.cooptweaks.commands.misc.Shrug;
+import com.cooptweaks.commands.misc.UnflipTable;
 import com.cooptweaks.keybinds.misc.Link;
 import dev.architectury.event.EventResult;
+import dev.architectury.event.events.client.ClientCommandRegistrationEvent;
 import dev.architectury.event.events.client.ClientScreenInputEvent;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
@@ -34,6 +39,16 @@ public class Client {
 			}
 
 			return EventResult.pass();
+		});
+
+		ClientCommandRegistrationEvent.EVENT.register((dispatcher, context) -> {
+			new Shrug().register(dispatcher, context);
+
+			new FlipTable().register(dispatcher, context);
+
+			new UnflipTable().register(dispatcher, context);
+
+			new Coordinates().register(dispatcher, context);
 		});
 	}
 }
