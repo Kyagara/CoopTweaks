@@ -9,7 +9,7 @@ import net.minecraft.util.Identifier;
 
 public record LinkPacket(ItemStack value) implements CustomPayload {
 	private static final Identifier ID = Identifier.of(Main.MOD_ID, "link_item_packet");
-	public static CustomPayload.Id<LinkPacket> PAYLOAD_ID = new Id<>(ID);
+	public static final CustomPayload.Id<LinkPacket> PAYLOAD_ID = new Id<>(ID);
 	public static final PacketCodec<RegistryByteBuf, LinkPacket> CODEC = ItemStack.PACKET_CODEC.xmap(LinkPacket::new, LinkPacket::value).cast();
 
 	@Override

@@ -1,5 +1,8 @@
 package com.cooptweaks;
 
+import com.cooptweaks.config.AdvancementsConfig;
+import com.cooptweaks.config.Configuration;
+import com.cooptweaks.config.DiscordConfig;
 import discord4j.rest.util.Color;
 import net.minecraft.advancement.*;
 import net.minecraft.server.MinecraftServer;
@@ -36,8 +39,6 @@ import java.util.concurrent.ConcurrentHashMap;
  </ol>
  */
 public final class Advancements {
-	private static final Discord DISCORD = Main.DISCORD;
-
 	private static MinecraftServer SERVER;
 
 	/** Map of all advancements. Loaded at startup. */
@@ -69,7 +70,16 @@ public final class Advancements {
 		}
 	}
 
-	public void loadAdvancements(MinecraftServer server) {
+	private Advancements() {
+	}
+
+	/** Loads all necessary advancements and criteria from the server and the save file. */
+	public static void start(MinecraftServer server) {
+		if (!AdvancementsConfig.enabled()) {
+			Main.LOGGER.error("Advancements are not enabled, skipping advancement loading.");
+			return;
+		}
+
 		SERVER = server;
 
 		int totalAdvancements = loadServerAdvancements(server);
@@ -104,9 +114,7 @@ public final class Advancements {
 
 				// Add all criteria for this advancement to the criteria map.
 				Map<String, AdvancementCriterion<?>> criteria = advancement.criteria();
-				criteria.forEach((key, criterion) -> {
-					ALL_CRITERIA.computeIfAbsent(entry.id(), id -> new ArrayList<>()).add(key);
-				});
+				criteria.forEach((key, criterion) -> ALL_CRITERIA.computeIfAbsent(entry.id(), id -> new ArrayList<>()).add(key));
 			});
 		}
 
@@ -143,7 +151,7 @@ public final class Advancements {
 	}
 
 	/** Unloads the advancements and closes the save file. */
-	public void unload() {
+	public static void unload() {
 		if (CURRENT_SEED_FILE.isOpen()) {
 			try {
 				CURRENT_SEED_FILE.close();
@@ -157,7 +165,11 @@ public final class Advancements {
 		ALL_CRITERIA.clear();
 	}
 
-	public void SyncPlayerOnJoin(ServerPlayerEntity player, String name) {
+	public static void SyncPlayerOnJoin(ServerPlayerEntity player, String name) {
+		if (AdvancementsConfig.enabled()) {
+			return;
+		}
+
 		if (COMPLETED_ADVANCEMENTS.isEmpty() || ALL_ADVANCEMENTS.isEmpty()) {
 			return;
 		}
@@ -176,7 +188,7 @@ public final class Advancements {
 		});
 	}
 
-	public void OnCriterion(ServerPlayerEntity currentPlayer, AdvancementEntry entry) {
+	public static void OnCriterion(ServerPlayerEntity currentPlayer, AdvancementEntry entry) {
 		if (ALL_ADVANCEMENTS.isEmpty()) {
 			return;
 		}
@@ -232,9 +244,13 @@ public final class Advancements {
 			title = advancementId.toString();
 		}
 
+		if (!DiscordConfig.onAdvancement()) {
+			return;
+		}
+
 		String description = display.getDescription().getString();
 		String message = String.format("**%s** has made the advancement **%s**!%n*%s*", playerName, title, description);
-		DISCORD.sendEmbed(message, Color.GREEN);
+		Discord.sendEmbed(message, Color.GREEN);
 	}
 
 	/**

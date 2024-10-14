@@ -2,6 +2,7 @@ package com.cooptweaks.commands.advancements;
 
 import com.cooptweaks.Advancements;
 import com.cooptweaks.commands.ServerCommand;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.command.CommandRegistryAccess;
@@ -22,6 +23,6 @@ public class Progress implements ServerCommand {
 	@Override
 	public int execute(CommandContext<ServerCommandSource> context) {
 		context.getSource().sendFeedback(() -> Text.literal(String.format("%s advancements completed.", Advancements.getAdvancementsProgress())), false);
-		return 0;
+		return Command.SINGLE_SUCCESS;
 	}
 }

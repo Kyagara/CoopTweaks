@@ -17,6 +17,7 @@ public class FlipTable implements ClientCommand {
 	@Override
 	public int execute(CommandContext<ClientCommandRegistrationEvent.ClientCommandSourceStack> context) {
 		ClientPlayerEntity player = context.getSource().arch$getPlayer();
+
 		player.networkHandler.sendChatMessage("(╯°□°)╯︵ ┻━┻");
 		return Command.SINGLE_SUCCESS;
 	}

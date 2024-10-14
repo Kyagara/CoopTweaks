@@ -31,12 +31,11 @@ public class Client {
 
 		KeyMappingRegistry.register(LINK_ITEM_KEY);
 
-		ClientScreenInputEvent.KEY_RELEASED_POST.register((client, screen, key, scanCode, modifiers) -> {
-			if (screen instanceof HandledScreen<?>) {
-				if (LINK_ITEM_KEY.matchesKey(key, scanCode) && Screen.hasShiftDown()) {
-					Link.sendPacket(client);
-				}
+		ClientScreenInputEvent.KEY_RELEASED_POST.register((client, screen, keyCode, scanCode, modifiers) -> {
+			if (screen instanceof HandledScreen<?> && LINK_ITEM_KEY.matchesKey(keyCode, scanCode) && Screen.hasShiftDown()) {
+				Link.sendPacket(client);
 			}
+
 
 			return EventResult.pass();
 		});

@@ -17,6 +17,7 @@ public class Shrug implements ClientCommand {
 	@Override
 	public int execute(CommandContext<ClientCommandRegistrationEvent.ClientCommandSourceStack> context) {
 		ClientPlayerEntity player = context.getSource().arch$getPlayer();
+
 		player.networkHandler.sendChatMessage("¯\\_(ツ)_/¯");
 		return Command.SINGLE_SUCCESS;
 	}

@@ -36,7 +36,11 @@ public class Status implements SlashCommand {
 		}
 
 		String motd = server.getServerMotd();
-		String address = String.format("%s:%d", server.getServerIp(), server.getServerPort());
+		String ip = server.getServerIp();
+		if (ip.isEmpty()) {
+			ip = "127.0.0.1";
+		}
+		String address = String.format("%s:%d", ip, server.getServerPort());
 		String version = server.getVersion();
 		String players = String.format("%d/%d", server.getCurrentPlayerCount(), server.getMaxPlayerCount());
 		String advancements = Advancements.getAdvancementsProgress();

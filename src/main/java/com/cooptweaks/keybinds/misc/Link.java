@@ -15,6 +15,9 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Rarity;
 
 public class Link {
+	private Link() {
+	}
+
 	public static void sendPacket(MinecraftClient client) {
 		if (client.player == null) {
 			return;

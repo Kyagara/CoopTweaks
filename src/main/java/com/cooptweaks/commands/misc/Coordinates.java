@@ -18,8 +18,10 @@ public class Coordinates implements ClientCommand {
 	@Override
 	public int execute(CommandContext<ClientCommandRegistrationEvent.ClientCommandSourceStack> context) {
 		ClientPlayerEntity player = context.getSource().arch$getPlayer();
+
 		String dimension = Dimension.getPlayerDimension(player.getName().getString());
 		String coordinates = String.format("X: %d Y: %d Z: %d @ %s", (int) player.getX(), (int) player.getY(), (int) player.getZ(), dimension);
+
 		player.networkHandler.sendChatMessage(coordinates);
 		return Command.SINGLE_SUCCESS;
 	}
