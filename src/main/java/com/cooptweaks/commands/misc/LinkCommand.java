@@ -2,6 +2,7 @@ package com.cooptweaks.commands.misc;
 
 import com.cooptweaks.commands.ServerCommand;
 import com.cooptweaks.keybinds.misc.Link;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.command.CommandRegistryAccess;
@@ -25,19 +26,19 @@ public class LinkCommand implements ServerCommand {
 		ServerCommandSource source = context.getSource();
 		ServerPlayerEntity player = source.getPlayer();
 		if (player == null) {
-			return 1;
+			return 0;
 		}
 
 		ItemStack item = player.getMainHandStack();
 
 		if (item.isEmpty()) {
 			context.getSource().sendFeedback(() -> Text.of("You are not holding anything."), false);
-			return 1;
+			return 0;
 		}
 
 		Text text = Link.getHoverableText(item, player.getDisplayName());
 
 		source.getServer().getPlayerManager().broadcast(text, false);
-		return 0;
+		return Command.SINGLE_SUCCESS;
 	}
 }

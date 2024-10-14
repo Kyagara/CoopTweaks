@@ -17,6 +17,7 @@ public class UnflipTable implements ClientCommand {
 	@Override
 	public int execute(CommandContext<ClientCommandRegistrationEvent.ClientCommandSourceStack> context) {
 		ClientPlayerEntity player = context.getSource().arch$getPlayer();
+
 		player.networkHandler.sendChatMessage("┬─┬ノ( º _ ºノ)");
 		return Command.SINGLE_SUCCESS;
 	}

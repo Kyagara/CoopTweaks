@@ -1,5 +1,7 @@
-package com.cooptweaks;
+package com.cooptweaks.config;
 
+import com.cooptweaks.Main;
+import com.cooptweaks.types.ConfigMap;
 import dev.architectury.platform.Platform;
 
 import java.io.IOException;
@@ -17,8 +19,11 @@ public final class Configuration {
 	/** Folder where advancement progress per world(seed) is saved. */
 	public static final Path ADVANCEMENTS_SAVE_PATH = MAIN_PATH.resolve("saves");
 
+	/** Configuration file for the advancement module. */
+	private static final Path ADVANCEMENTS_PATH = MAIN_PATH.resolve("advancements.toml");
+
 	/** Discord bot configuration file. */
-	public static final Path DISCORD_PATH = MAIN_PATH.resolve("discord.toml");
+	private static final Path DISCORD_PATH = MAIN_PATH.resolve("discord.toml");
 
 	/**
 	 Verify that the necessary config files exist, if not, generate the default config files.
@@ -26,6 +31,7 @@ public final class Configuration {
 	 The config folder "cooptweaks" should contain:
 	 <ul>
 	 <li>saves</li>
+	 <li>advancements.toml</li>
 	 <li>discord.toml</li>
 	 </ul>
 	 */
@@ -48,18 +54,28 @@ public final class Configuration {
 			}
 		}
 
-		if (!Files.exists(DISCORD_PATH)) {
+		if (!Files.exists(ADVANCEMENTS_PATH)) {
 			try {
-				String config = """
-						token =
-						application_id =
-						channel_id =""";
-
-				Main.LOGGER.info("Creating discord config file.");
-				Files.writeString(DISCORD_PATH, config, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+				Main.LOGGER.info("Creating advancements config file.");
+				Files.writeString(ADVANCEMENTS_PATH, AdvancementsConfig.defaultConfig(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
+
+		if (!Files.exists(DISCORD_PATH)) {
+			try {
+				Main.LOGGER.info("Creating discord config file.");
+				Files.writeString(DISCORD_PATH, DiscordConfig.defaultConfig(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	/** Parse the configuration files. */
+	public static void load() {
+		DiscordConfig.load(new ConfigMap(Configuration.DISCORD_PATH));
+		AdvancementsConfig.load(new ConfigMap(Configuration.ADVANCEMENTS_PATH));
 	}
 }

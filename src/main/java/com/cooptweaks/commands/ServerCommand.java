@@ -6,7 +6,7 @@ import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 
-/* A Minecraft server command. */
+/** A Minecraft server command. */
 public interface ServerCommand {
 	/** Registers the command. Some commands are not registered in the "cooptweaks" group. */
 	void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment);

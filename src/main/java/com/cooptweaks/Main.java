@@ -2,6 +2,9 @@ package com.cooptweaks;
 
 import com.cooptweaks.commands.advancements.Progress;
 import com.cooptweaks.commands.misc.LinkCommand;
+import com.cooptweaks.config.AdvancementsConfig;
+import com.cooptweaks.config.Configuration;
+import com.cooptweaks.config.DiscordConfig;
 import com.cooptweaks.keybinds.misc.Link;
 import com.cooptweaks.packets.LinkPacket;
 import dev.architectury.event.EventResult;
@@ -15,29 +18,29 @@ public final class Main {
 	public static final String MOD_ID = "cooptweaks";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	public static final Discord DISCORD = new Discord();
-	public static final Advancements ADVANCEMENTS = new Advancements();
-
+	/** The time in milliseconds when the server was started. */
 	public static long STARTUP;
 
 	public static void init() {
 		Configuration.verify();
+		Configuration.load();
 
-		// Start the Discord bot when the server is starting.
-		LifecycleEvent.SERVER_BEFORE_START.register(server -> DISCORD.Start());
+		LifecycleEvent.SERVER_BEFORE_START.register(server -> Discord.start());
 
 		LifecycleEvent.SERVER_STARTED.register(server -> {
 			STARTUP = System.currentTimeMillis();
 
-			ADVANCEMENTS.loadAdvancements(server);
-			DISCORD.NotifyStarted(server);
+			Advancements.start(server);
+			Discord.NotifyStarted(server);
 		});
 
-		LifecycleEvent.SERVER_LEVEL_SAVE.register(world -> DISCORD.CyclePresence(world.getPlayers()));
+		if (DiscordConfig.enabled()) {
+			LifecycleEvent.SERVER_LEVEL_SAVE.register(world -> Discord.CyclePresence(world.getPlayers()));
+		}
 
 		LifecycleEvent.SERVER_STOPPING.register(server -> {
-			DISCORD.Stop();
-			ADVANCEMENTS.unload();
+			Discord.Stop();
+			Advancements.unload();
 		});
 
 		PlayerEvent.PLAYER_JOIN.register(player -> {
@@ -45,20 +48,27 @@ public final class Main {
 			String dimensionId = player.getWorld().getRegistryKey().getValue().toString();
 
 			Dimension.updatePlayerCurrentDimension(name, dimensionId);
-			DISCORD.PlayerJoined(name);
-			ADVANCEMENTS.SyncPlayerOnJoin(player, name);
+
+			Discord.PlayerJoined(name);
+			Advancements.SyncPlayerOnJoin(player, name);
 		});
 
-		PlayerEvent.PLAYER_QUIT.register(DISCORD::PlayerLeft);
+		if (DiscordConfig.onLeave()) {
+			PlayerEvent.PLAYER_QUIT.register(Discord::PlayerLeft);
+		}
 
-		PlayerEvent.PLAYER_ADVANCEMENT.register(ADVANCEMENTS::OnCriterion);
+		if (AdvancementsConfig.enabled()) {
+			PlayerEvent.PLAYER_ADVANCEMENT.register(Advancements::OnCriterion);
+		}
 
 		PlayerEvent.CHANGE_DIMENSION.register((player, oldWorld, newWorld) -> {
 			String name = player.getName().getString();
 			String dimensionId = newWorld.getValue().toString();
 
 			Dimension.updatePlayerCurrentDimension(name, dimensionId);
-			DISCORD.PlayerChangedDimension(name, Dimension.getPlayerDimension(name));
+
+			Discord.PlayerChangedDimension(name, Dimension.getPlayerDimension(name));
+
 		});
 
 		PlayerEvent.PLAYER_RESPAWN.register((newPlayer, conqueredEnd, removalReason) -> {
@@ -68,10 +78,12 @@ public final class Main {
 			Dimension.updatePlayerCurrentDimension(name, dimensionId);
 		});
 
-		ChatEvent.RECEIVED.register((player, message) -> {
-			DISCORD.PlayerSentChatMessage(player, message);
-			return EventResult.pass();
-		});
+		if (DiscordConfig.onMessage()) {
+			ChatEvent.RECEIVED.register((player, message) -> {
+				Discord.PlayerSentChatMessage(player, message);
+				return EventResult.pass();
+			});
+		}
 
 		EntityEvent.LIVING_DEATH.register((entity, source) -> {
 			if (entity.isPlayer()) {
@@ -80,7 +92,7 @@ public final class Main {
 				BlockPos pos = entity.getBlockPos();
 
 				Dimension.updatePlayerCurrentDimension(name, dimensionId);
-				DISCORD.PlayerDied(name, pos, source.getDeathMessage(entity));
+				Discord.PlayerDied(name, pos, source.getDeathMessage(entity));
 			}
 
 			return EventResult.pass();

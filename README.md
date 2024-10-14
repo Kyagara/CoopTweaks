@@ -1,6 +1,6 @@
 # CoopTweaks
 
-Sync advancements, chat relay for Discord and more. Check [here](https://github.com/Kyagara/CoopTweaks/actions) for the latest version.
+Sync advancements, chat relay for Discord and more. Check [here](https://github.com/Kyagara/CoopTweaks/actions) for the latest builds.
 
 ## About
 
@@ -19,42 +19,47 @@ Some features in this mod come from my other mod, [Fred](https://github.com/Kyag
 
 ## TODO
 
-- Enable/disable modules, allow option to disable the relay but not the syncing.
-- Maybe use a small database library for storage as it might be useful for other ideas.
+- More options to enable/disable certain parts of the mod.
 - Add Discord commands to retrieve general information about the server, TPS, etc.
+- Maybe use a small database library for storage as it might be useful for other ideas.
 
 ## Configuration
 
-Configuration is located in a folder called `cooptweaks`, it contains the following:
+Configuration is located in a folder called `cooptweaks`, contains the following:
 
-- `saves`: Folder containing the advancements reached by the players, files are named by the world seed.
+- `saves/`: Folder containing the advancements reached by the players, files are named by the world seed.
+- `advancements.toml`: Configuration for the advancement module.
 - `discord.toml`: Configuration for Discord related features.
 
 The Discord bot requires the permission to create slash commands and `MESSAGE_CONTENT` and `GUILD_MEMBERS` intents.
 
-## Keybinds
+## Client
+
+#### Keybinds
 
 - `Left Shift + Left Alt`: Links the item being hovered by the player.
 
-## Client Commands
+#### Commands
 
 - `shrug`: Shrugs.
 - `flip`: Flips the table.
 - `unflip`: Unflips said table.
-- `coords`: Shows the player's coordinates in a dimension.
+- `coords`: Sends the player's coordinates in a dimension in chat.
 
-## Server Commands
+## Server
+
+#### Commands
 
 All commands are prefixed with `/cooptweaks`.
 
-### `advancements <subcommand>`
+#### `advancements <subcommand>`
 
 - `progress`: Shows the advancement progress of the world.
 
-### `link`
+#### `link`
 
 Links the item being held by the player in the chat.
 
-## Slash Commands (Discord)
+## Discord Commands
 
 - `/status`: Shows information about the server like motd, uptime, address, etc.

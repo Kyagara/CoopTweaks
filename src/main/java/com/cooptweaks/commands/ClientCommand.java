@@ -5,7 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import dev.architectury.event.events.client.ClientCommandRegistrationEvent;
 import net.minecraft.command.CommandRegistryAccess;
 
-/* A Minecraft client command. */
+/** A Minecraft client command. */
 public interface ClientCommand {
 	/** Registers the command. */
 	void register(CommandDispatcher<ClientCommandRegistrationEvent.ClientCommandSourceStack> dispatcher, CommandRegistryAccess context);

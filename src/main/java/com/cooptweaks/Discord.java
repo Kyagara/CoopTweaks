@@ -2,7 +2,7 @@ package com.cooptweaks;
 
 import com.cooptweaks.commands.SlashCommand;
 import com.cooptweaks.commands.discord.Status;
-import com.cooptweaks.types.ConfigMap;
+import com.cooptweaks.config.DiscordConfig;
 import com.cooptweaks.types.Result;
 import com.cooptweaks.utils.TimeSince;
 import com.mojang.datafixers.util.Pair;
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  The bot is responsible for sending messages to the Discord channel and the server chat.
  */
 public final class Discord {
-	/** Whether the bot has finished setting up all necessary components. */
+	/** Whether the bot has finished setting up all necessary components and is ready. */
 	private static final AtomicBoolean BOT_READY = new AtomicBoolean(false);
 
 	private static MinecraftServer SERVER;
@@ -68,7 +68,7 @@ public final class Discord {
 	/** Queue of events to be processed after the bot is ready. */
 	private static final List<Runnable> QUEUE = new ArrayList<>(2);
 
-	public void queueEvent(Runnable event) {
+	public static void queueEvent(Runnable event) {
 		if (BOT_READY.get()) {
 			event.run();
 		} else {
@@ -81,13 +81,11 @@ public final class Discord {
 		QUEUE.clear();
 	}
 
-	public void Start() {
-		ConfigMap config = new ConfigMap(Configuration.DISCORD_PATH);
-		String token = config.get("token").toString();
-		String channelId = config.get("channel_id").toString();
-		long applicationId = config.get("application_id").toLong();
+	private Discord() {
+	}
 
-		if (token.isEmpty() || channelId.isEmpty() || applicationId == 0) {
+	public static void start() {
+		if (!DiscordConfig.enabled()) {
 			Main.LOGGER.error("Some Discord configuration fields are missing, skipping Discord bot setup.");
 			return;
 		}
@@ -100,7 +98,7 @@ public final class Discord {
 			commands.add(cmd);
 		}
 
-		DiscordClient.create(token)
+		DiscordClient.create(DiscordConfig.token())
 				.gateway()
 				.setStore(Store.fromLayout(LocalStoreLayout.create()))
 				.setEnabledIntents(IntentSet.of(Intent.GUILD_MESSAGES, Intent.MESSAGE_CONTENT, Intent.GUILD_MEMBERS))
@@ -112,17 +110,24 @@ public final class Discord {
 
 					Main.LOGGER.info("Overwriting global application commands.");
 					rest.getApplicationService()
-							.bulkOverwriteGlobalApplicationCommand(applicationId, commands)
+							.bulkOverwriteGlobalApplicationCommand(DiscordConfig.applicationId(), commands)
 							.doOnError(err -> Main.LOGGER.error("Failed to overwrite global application commands. Error: {}", err.getMessage()))
 							.subscribe();
 
 					GATEWAY = gateway;
 
-					gateway.on(ReadyEvent.class).subscribe(this::onReady);
-					gateway.on(MessageCreateEvent.class).subscribe(this::onMessage);
-					gateway.on(ChatInputInteractionEvent.class).subscribe(this::onInteraction);
+					gateway.on(ReadyEvent.class).subscribe(Discord::onReady);
+
+					if (DiscordConfig.onDiscordMessage()) {
+						gateway.on(MessageCreateEvent.class).subscribe(Discord::onMessage);
+					}
+
+					// Only one command so far, so no need to subscribe to this event if disabled.
+					if (DiscordConfig.statusCommand()) {
+						gateway.on(ChatInputInteractionEvent.class).subscribe(Discord::onInteraction);
+					}
 				})
-				.flatMap(gateway -> gateway.getChannelById(Snowflake.of(channelId))
+				.flatMap(gateway -> gateway.getChannelById(Snowflake.of(DiscordConfig.channelId()))
 						.ofType(MessageChannel.class)
 						.doOnNext(channel -> {
 							CHANNEL = channel;
@@ -137,21 +142,21 @@ public final class Discord {
 				.subscribe();
 	}
 
-	public void Stop() {
-		if (BOT_READY.get()) {
+	public static void Stop() {
+		if (BOT_READY.get() && DiscordConfig.onServerStop()) {
 			sendEmbed("Server stopping.", Color.RED);
 			Main.LOGGER.info("Logging out of Discord.");
 			GATEWAY.logout().block();
 		}
 	}
 
-	private void onReady(ReadyEvent ready) {
+	private static void onReady(ReadyEvent ready) {
 		GATEWAY.updatePresence(ClientPresence.online(ClientActivity.playing("Minecraft"))).subscribe();
 		User self = ready.getSelf();
 		BOT_USER_ID = self.getId();
 	}
 
-	private void onInteraction(ChatInputInteractionEvent event) {
+	private static void onInteraction(ChatInputInteractionEvent event) {
 		if (!BOT_READY.get()) {
 			return;
 		}
@@ -176,7 +181,7 @@ public final class Discord {
 		Main.LOGGER.warn("Unknown command '{}'", cmd);
 	}
 
-	private void onMessage(MessageCreateEvent event) {
+	private static void onMessage(MessageCreateEvent event) {
 		if (!BOT_READY.get() || SERVER == null || SERVER.getCurrentPlayerCount() == 0) {
 			return;
 		}
@@ -248,7 +253,7 @@ public final class Discord {
 				}).subscribe();
 	}
 
-	public void sendEmbed(String message, Color color) {
+	public static void sendEmbed(String message, Color color) {
 		if (!BOT_READY.get()) {
 			return;
 		}
@@ -261,13 +266,17 @@ public final class Discord {
 		CHANNEL.createMessage(embed).subscribe();
 	}
 
-	public void NotifyStarted(MinecraftServer server) {
+	public static void NotifyStarted(MinecraftServer server) {
+		if (!DiscordConfig.onServerStart()) {
+			return;
+		}
+
 		SERVER = server;
 		LAST_PRESENCE_UPDATE = System.currentTimeMillis();
 		queueEvent(() -> sendEmbed("Server started!", Color.GREEN));
 	}
 
-	public void CyclePresence(List<ServerPlayerEntity> players) {
+	public static void CyclePresence(List<ServerPlayerEntity> players) {
 		if (!BOT_READY.get()) {
 			return;
 		}
@@ -297,16 +306,20 @@ public final class Discord {
 		PRESENCE_CYCLE = !PRESENCE_CYCLE;
 	}
 
-	public void PlayerJoined(String name) {
+	public static void PlayerJoined(String name) {
+		if (!DiscordConfig.onJoin()) {
+			return;
+		}
+
 		// In the case on an integrated server, this event might not be called, so queue it instead.
 		queueEvent(() -> sendEmbed(String.format("**%s** joined!", name), Color.GREEN));
 	}
 
-	public void PlayerLeft(ServerPlayerEntity player) {
+	public static void PlayerLeft(ServerPlayerEntity player) {
 		sendEmbed(String.format("**%s** left!", player.getName().getString()), Color.BLACK);
 	}
 
-	public void PlayerSentChatMessage(ServerPlayerEntity player, Text message) {
+	public static void PlayerSentChatMessage(ServerPlayerEntity player, Text message) {
 		if (!BOT_READY.get()) {
 			return;
 		}
@@ -318,12 +331,20 @@ public final class Discord {
 		CHANNEL.createMessage(text).subscribe();
 	}
 
-	public void PlayerChangedDimension(String name, String dimension) {
+	public static void PlayerChangedDimension(String name, String dimension) {
+		if (!DiscordConfig.onChangeDimension()) {
+			return;
+		}
+
 		String message = String.format("**%s** entered **%s**.", name, dimension);
 		sendEmbed(message, Color.BLACK);
 	}
 
-	public void PlayerDied(String name, BlockPos pos, Text deathMessage) {
+	public static void PlayerDied(String name, BlockPos pos, Text deathMessage) {
+		if (!DiscordConfig.onDeath()) {
+			return;
+		}
+
 		String dimension = Dimension.getPlayerDimension(name);
 		String text = deathMessage.getString().replace(name, String.format("**%s**", name));
 

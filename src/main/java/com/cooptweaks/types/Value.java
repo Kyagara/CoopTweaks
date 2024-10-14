@@ -7,12 +7,21 @@ public record Value(String value) {
 		return value;
 	}
 
-	/** Convert the value to a long. */
-	public Long toLong() {
+	/** Convert the {@link Value} to a long. */
+	public long toLong() {
 		if (value.isEmpty()) {
 			return 0L;
 		}
 
 		return Long.parseLong(value);
+	}
+
+	/** Convert the {@link Value} to a boolean. */
+	public boolean toBoolean() {
+		if (value.isEmpty()) {
+			return false;
+		}
+
+		return Boolean.parseBoolean(value);
 	}
 }
