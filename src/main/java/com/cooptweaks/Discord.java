@@ -84,7 +84,7 @@ public final class Discord {
 	private Discord() {
 	}
 
-	public static void start() {
+	public static void init() {
 		if (!DiscordConfig.enabled()) {
 			Main.LOGGER.error("Some Discord configuration fields are missing, skipping Discord bot setup.");
 			return;
@@ -142,7 +142,7 @@ public final class Discord {
 				.subscribe();
 	}
 
-	public static void Stop() {
+	public static void serverStop() {
 		if (BOT_READY.get() && DiscordConfig.onServerStop()) {
 			sendEmbed("Server stopping.", Color.RED);
 			Main.LOGGER.info("Logging out of Discord.");
@@ -253,30 +253,7 @@ public final class Discord {
 				}).subscribe();
 	}
 
-	public static void sendEmbed(String message, Color color) {
-		if (!BOT_READY.get()) {
-			return;
-		}
-
-		EmbedCreateSpec embed = EmbedCreateSpec.builder()
-				.color(color)
-				.description(message)
-				.build();
-
-		CHANNEL.createMessage(embed).subscribe();
-	}
-
-	public static void NotifyStarted(MinecraftServer server) {
-		if (!DiscordConfig.onServerStart()) {
-			return;
-		}
-
-		SERVER = server;
-		LAST_PRESENCE_UPDATE = System.currentTimeMillis();
-		queueEvent(() -> sendEmbed("Server started!", Color.GREEN));
-	}
-
-	public static void CyclePresence(List<ServerPlayerEntity> players) {
+	public static void cyclePresence(List<ServerPlayerEntity> players) {
 		if (!BOT_READY.get()) {
 			return;
 		}
@@ -306,7 +283,30 @@ public final class Discord {
 		PRESENCE_CYCLE = !PRESENCE_CYCLE;
 	}
 
-	public static void PlayerJoined(String name) {
+	public static void sendEmbed(String message, Color color) {
+		if (!BOT_READY.get()) {
+			return;
+		}
+
+		EmbedCreateSpec embed = EmbedCreateSpec.builder()
+				.color(color)
+				.description(message)
+				.build();
+
+		CHANNEL.createMessage(embed).subscribe();
+	}
+
+	public static void serverStarted(MinecraftServer server) {
+		if (!DiscordConfig.onServerStart()) {
+			return;
+		}
+
+		SERVER = server;
+		LAST_PRESENCE_UPDATE = System.currentTimeMillis();
+		queueEvent(() -> sendEmbed("Server started!", Color.GREEN));
+	}
+
+	public static void playerJoin(String name) {
 		if (!DiscordConfig.onJoin()) {
 			return;
 		}
@@ -315,11 +315,11 @@ public final class Discord {
 		queueEvent(() -> sendEmbed(String.format("**%s** joined!", name), Color.GREEN));
 	}
 
-	public static void PlayerLeft(ServerPlayerEntity player) {
+	public static void playerLeave(ServerPlayerEntity player) {
 		sendEmbed(String.format("**%s** left!", player.getName().getString()), Color.BLACK);
 	}
 
-	public static void PlayerSentChatMessage(ServerPlayerEntity player, Text message) {
+	public static void playerMessage(ServerPlayerEntity player, Text message) {
 		if (!BOT_READY.get()) {
 			return;
 		}
@@ -331,7 +331,7 @@ public final class Discord {
 		CHANNEL.createMessage(text).subscribe();
 	}
 
-	public static void PlayerChangedDimension(String name, String dimension) {
+	public static void playerChangedDimension(String name, String dimension) {
 		if (!DiscordConfig.onChangeDimension()) {
 			return;
 		}
@@ -340,7 +340,7 @@ public final class Discord {
 		sendEmbed(message, Color.BLACK);
 	}
 
-	public static void PlayerDied(String name, BlockPos pos, Text deathMessage) {
+	public static void playerDeath(String name, BlockPos pos, Text deathMessage) {
 		if (!DiscordConfig.onDeath()) {
 			return;
 		}

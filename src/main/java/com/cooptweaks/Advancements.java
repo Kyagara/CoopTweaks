@@ -165,7 +165,8 @@ public final class Advancements {
 		ALL_CRITERIA.clear();
 	}
 
-	public static void SyncPlayerOnJoin(ServerPlayerEntity player, String name) {
+	/** Grants the {@link ServerPlayerEntity} all advancements completed in the save file. */
+	public static void syncPlayer(ServerPlayerEntity player, String name) {
 		if (AdvancementsConfig.enabled()) {
 			return;
 		}
@@ -188,7 +189,8 @@ public final class Advancements {
 		});
 	}
 
-	public static void OnCriterion(ServerPlayerEntity currentPlayer, AdvancementEntry entry) {
+	/** Called when a player receives a criteria for an advancement. */
+	public static void onCriterion(ServerPlayerEntity currentPlayer, AdvancementEntry entry) {
 		if (ALL_ADVANCEMENTS.isEmpty()) {
 			return;
 		}

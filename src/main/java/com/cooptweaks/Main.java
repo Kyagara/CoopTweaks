@@ -25,21 +25,21 @@ public final class Main {
 		Configuration.verify();
 		Configuration.load();
 
-		LifecycleEvent.SERVER_BEFORE_START.register(server -> Discord.start());
+		LifecycleEvent.SERVER_BEFORE_START.register(server -> Discord.init());
 
 		LifecycleEvent.SERVER_STARTED.register(server -> {
 			STARTUP = System.currentTimeMillis();
 
 			Advancements.start(server);
-			Discord.NotifyStarted(server);
+			Discord.serverStarted(server);
 		});
 
 		if (DiscordConfig.enabled()) {
-			LifecycleEvent.SERVER_LEVEL_SAVE.register(world -> Discord.CyclePresence(world.getPlayers()));
+			LifecycleEvent.SERVER_LEVEL_SAVE.register(world -> Discord.cyclePresence(world.getPlayers()));
 		}
 
 		LifecycleEvent.SERVER_STOPPING.register(server -> {
-			Discord.Stop();
+			Discord.serverStop();
 			Advancements.unload();
 		});
 
@@ -49,16 +49,16 @@ public final class Main {
 
 			Dimension.updatePlayerCurrentDimension(name, dimensionId);
 
-			Discord.PlayerJoined(name);
-			Advancements.SyncPlayerOnJoin(player, name);
+			Discord.playerJoin(name);
+			Advancements.syncPlayer(player, name);
 		});
 
 		if (DiscordConfig.onLeave()) {
-			PlayerEvent.PLAYER_QUIT.register(Discord::PlayerLeft);
+			PlayerEvent.PLAYER_QUIT.register(Discord::playerLeave);
 		}
 
 		if (AdvancementsConfig.enabled()) {
-			PlayerEvent.PLAYER_ADVANCEMENT.register(Advancements::OnCriterion);
+			PlayerEvent.PLAYER_ADVANCEMENT.register(Advancements::onCriterion);
 		}
 
 		PlayerEvent.CHANGE_DIMENSION.register((player, oldWorld, newWorld) -> {
@@ -67,7 +67,7 @@ public final class Main {
 
 			Dimension.updatePlayerCurrentDimension(name, dimensionId);
 
-			Discord.PlayerChangedDimension(name, Dimension.getPlayerDimension(name));
+			Discord.playerChangedDimension(name, Dimension.getPlayerDimension(name));
 
 		});
 
@@ -80,7 +80,7 @@ public final class Main {
 
 		if (DiscordConfig.onMessage()) {
 			ChatEvent.RECEIVED.register((player, message) -> {
-				Discord.PlayerSentChatMessage(player, message);
+				Discord.playerMessage(player, message);
 				return EventResult.pass();
 			});
 		}
@@ -92,7 +92,7 @@ public final class Main {
 				BlockPos pos = entity.getBlockPos();
 
 				Dimension.updatePlayerCurrentDimension(name, dimensionId);
-				Discord.PlayerDied(name, pos, source.getDeathMessage(entity));
+				Discord.playerDeath(name, pos, source.getDeathMessage(entity));
 			}
 
 			return EventResult.pass();
